@@ -1,37 +1,26 @@
 {
-    "name": "Hello Extensions",
-    "description": "Base Level Extension",
-    "version": "1.0",
-    "manifest_version": 3,
-    "action": {
-        "default_popup": "assets/hello.html",
-        "default_icon": "assets/icon.png"
-    },
-    "background": {
-        "service_worker": "js/background/index.js",
-        "type": "module"
-    },
-    "content_scripts": [
-        {
-            "matches": [
-                "https://www.youtube.com/"
-            ],
-            "world": "MAIN",
-            "js": [
-                "js/content_scripts/youtube.js"
-            ]
-        }
-    ],
-    "externally_connectable": {
-        "matches": [
-            "https://*.youtube.com/*"
-        ]
-    },
-    "host_permissions": [
-        "<all_urls>"
-    ],
-    "permissions": [
-        "background",
-        "storage"
-    ]
+  "name": "Hello Extensions",
+  "description": "Base Level Extension",
+  "version": "1.0",
+  "manifest_version": 3,
+  "action": {
+    "default_popup": "assets/hello.html",
+    "default_icon": "assets/icon.png"
+  },
+  "background": {
+    "service_worker": "js/background/index.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/"],
+      "world": "MAIN",
+      "js": ["js/content_scripts/youtube.js"]
+    }
+  ],
+  "externally_connectable": {
+    "matches": ["https://*.youtube.com/*"]
+  },
+  "host_permissions": ["<all_urls>"],
+  "permissions": ["storage"]
 }
