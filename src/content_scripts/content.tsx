@@ -23,6 +23,14 @@ export function BlockedContent({
     );
   }
 
+  let details = spoiler.title;
+  if (spoiler.season) {
+    details += ` Season ${spoiler.season}`;
+  }
+  if (spoiler.episode) {
+    details += ` Episode ${spoiler.episode}`;
+  }
+
   return (
     <div
       key="blocked"
@@ -35,10 +43,7 @@ export function BlockedContent({
       }}
     >
       <div>Blocked by an spoiler blocker extension</div>
-      <div>
-        This is a content for a {spoiler.title} Season {spoiler.season} Episode{" "}
-        {spoiler.episode}{" "}
-      </div>
+      <div>This is a content for a {details}</div>
       <button onClick={() => setBlocked(false)} disabled={true}>
         Show the original content. (Doesn't work)
       </button>

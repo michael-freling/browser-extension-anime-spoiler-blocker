@@ -15,8 +15,8 @@ export interface ConfigContent {
 
 export interface Spoiler {
   title: string;
-  season: number;
-  episode: number;
+  season?: number;
+  episode?: number;
 }
 
 export class TextSpoilerAnalyzer {
@@ -38,7 +38,7 @@ export class TextSpoilerAnalyzer {
     text: string,
     title: string,
     keywords: string[]
-  ): Spoiler {
+  ): Spoiler | null {
     text = text.toLowerCase();
     let isTextFound = false;
     keywords.forEach((configKeyword) => {
@@ -47,21 +47,39 @@ export class TextSpoilerAnalyzer {
       }
     });
     if (!isTextFound) {
-      return;
+      return null;
     }
 
     // TODO: Currently, both of season and episode are required to be matched
     // TODO: season 2 part 2 episode X can be happening
     // TODO: episode 19 (meaning season 1) can be happening
-    const matches = text.match(/(season\s|S)([0-9]+).*(episode|Ep)\s([0-9]+)/i);
-    if (!matches) {
-      return;
+    let season;
+    let matches = text.match(/(season\s|S)(?<season>[0-9]+)/i);
+    if (matches) {
+      season = parseInt(matches.groups.season, 10);
+    }
+    let episode;
+    matches = text.match(/(episode\s|Ep\s?)(?<episode>[0-9]+)/i);
+    if (matches) {
+      episode = parseInt(matches.groups.episode, 10);
+    }
+    if (season == undefined && episode == undefined) {
+      return {
+        title,
+      };
+    } else if (episode == undefined) {
+      return {
+        title,
+        season,
+      };
+    } else if (season == undefined) {
+      season = 1;
     }
 
     return {
       title: title,
-      season: parseInt(matches[2], 10),
-      episode: parseInt(matches[4], 10),
+      season,
+      episode,
     };
   }
 
@@ -86,7 +104,8 @@ export class TextSpoilerAnalyzer {
       }
       if (
         episodeFromText.season == config.history.season &&
-        episodeFromText.episode <= config.history.episode
+        (episodeFromText.episode == undefined ||
+          episodeFromText.episode <= config.history.episode)
       ) {
         return;
       }

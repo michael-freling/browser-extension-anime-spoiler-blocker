@@ -3,7 +3,7 @@
         "strict": false,
         "module": "ES2015",
         "moduleResolution": "Node",
-        "target": "ES2015",
+        "target": "ES2018",
         "esModuleInterop": true,
         "sourceMap": true,
         "rootDir": "src",
