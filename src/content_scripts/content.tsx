@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-interface FilteredContentProps {
+interface BlockedContentProps {
   metadata: {
     title: string;
     season: number;
@@ -9,18 +9,18 @@ interface FilteredContentProps {
   originalContent: HTMLElement;
 }
 
-export function FilteredContent({
+export function BlockedContent({
   metadata,
   originalContent,
-}: FilteredContentProps) {
-  const [isFiltered, setFiltered] = useState(true);
+}: BlockedContentProps) {
+  const [isBlocked, setBlocked] = useState(true);
 
-  if (!isFiltered) {
+  if (!isBlocked) {
     // Workaround to insert an HTMLElement, but it doesn't work at all
     // https://stackoverflow.com/questions/49297334/react-how-to-add-htmlelement
     return (
       <div
-        key="non filtered"
+        key="non blocked"
         dangerouslySetInnerHTML={{ __html: originalContent.innerHTML }}
       />
     );
@@ -28,7 +28,7 @@ export function FilteredContent({
 
   return (
     <div
-      key="filtered"
+      key="blocked"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -37,12 +37,12 @@ export function FilteredContent({
         fontSize: "1.5rem",
       }}
     >
-      <div>Filtered by an spoiler filter extension</div>
+      <div>Blocked by an spoiler blocker extension</div>
       <div>
         This is a content for a {metadata.title} Season {metadata.season}{" "}
         Episode {metadata.episode}{" "}
       </div>
-      <button onClick={() => setFiltered(false)} disabled={true}>
+      <button onClick={() => setBlocked(false)} disabled={true}>
         Show the original content. (Doesn't work)
       </button>
     </div>

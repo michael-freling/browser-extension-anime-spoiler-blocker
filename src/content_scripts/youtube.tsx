@@ -1,4 +1,4 @@
-import { FilteredContent } from "./content";
+import { BlockedContent } from "./content";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
@@ -6,7 +6,7 @@ if (exports === undefined) {
   var exports = {};
 }
 
-const extensionId = "elifmnfcgkjlbclbglicfkbcdomkibdb";
+const extensionId = "bihgndcmdfolacndjgodbfgphlbdcden";
 
 interface ConfigContent {
   title: string;
@@ -29,7 +29,7 @@ interface VideoMetadata {
   episode: number;
 }
 
-class SpoilerFilter {
+class SpoilerBlocker {
   config: Config;
 
   constructor(config: Config) {
@@ -157,24 +157,24 @@ window.addEventListener("load", async (event) => {
       config,
     });
 
-    const filter = new SpoilerFilter(config);
+    const blocker = new SpoilerBlocker(config);
     let caches: {
       [elementId: string]: HTMLElement;
     } = {};
 
-    // Filter contents every 5 seconds. This is because
+    // Block contents every 5 seconds. This is because
     // 1. Some contents are not available when a page is loaded
-    // 2. When scrolling a page, new contents also need to be filtered
+    // 2. When scrolling a page, new contents also need to be blocked
     setInterval(() => {
-      const contents = filter.readContents();
+      const contents = blocker.readContents();
       if (contents.length == 0) {
         // At first, YouTube contents are not loaded when a window was loaded
         // Reload the contents when a content isn't available
         return;
       }
 
-      const filteredContents = filter.filter(contents);
-      filteredContents.forEach(({ contentHTMLElement, metadata }) => {
+      const blockedContents = blocker.filter(contents);
+      blockedContents.forEach(({ contentHTMLElement, metadata }) => {
         if (caches[contentHTMLElement.id]) {
           // do not mount if it's already mounted
           return;
@@ -186,14 +186,14 @@ window.addEventListener("load", async (event) => {
         ) as HTMLElement;
         ReactDOM.createRoot(contentHTMLElement).render(
           <StrictMode>
-            <FilteredContent
+            <BlockedContent
               metadata={metadata}
               originalContent={originalContent}
             />
           </StrictMode>
         );
       });
-      console.debug("Completed to filter contents");
+      console.debug("Completed to block contents");
     }, 5000);
   } catch (error) {
     console.log("error", {

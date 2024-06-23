@@ -1,6 +1,6 @@
 {
-  "name": "Hello Extensions",
-  "description": "Base Level Extension",
+  "name": "Spoiler Blocker",
+  "description": "An extension to block spoilers. Currently, it blocks contents on YouTube only",
   "version": "1.0",
   "manifest_version": 3,
   "action": {
