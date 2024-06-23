@@ -14,8 +14,14 @@ chrome.runtime.onMessageExternal.addListener(
   }
 );
 
-// TODO: Set a default configuration only when it's the first time
-async function main() {
+// https://developer.chrome.com/docs/extensions/reference/api/runtime#event-onInstalled
+chrome.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason === "install") {
+    onInstall();
+  }
+});
+
+async function onInstall() {
   try {
     const configFiles = [
       "assets/data/default_config.json",
@@ -42,5 +48,3 @@ async function main() {
     console.error("failed to run main", error);
   }
 }
-
-main();

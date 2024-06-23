@@ -11,6 +11,7 @@ module.exports = {
   entry: {
     "js/background/index": "./src/background/index",
     "js/content_scripts/youtube": "./src/content_scripts/youtube",
+    "js/options/index": "./src/options/index",
   },
   output: {
     filename: "[name].js",
