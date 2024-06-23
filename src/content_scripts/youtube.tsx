@@ -10,11 +10,11 @@ class VideoSpoilerFilter {
     this.textParser = new TextSpoilerAnalyzer(config);
   }
 
-  readContents(): Array<HTMLElement> {
+  readContents(): Element[] {
     // There are multiple #content elements in a different level,
     // So, instead of just getting #content, filter contents by #contents > #content
     const pageContents = document.querySelectorAll("#contents");
-    const contents = [];
+    const contents: Element[] = [];
     pageContents.forEach((pageContent) => {
       pageContent.querySelectorAll("#content").forEach((content) => {
         contents.push(content);
@@ -23,17 +23,18 @@ class VideoSpoilerFilter {
     return contents;
   }
 
-  filter(contents: Array<HTMLElement>): {
-    contentHTMLElement: HTMLElement;
+  filter(contents: Element[]): {
+    contentHTMLElement: Element;
     spoiler: Spoiler;
   }[] {
     const result: {
-      contentHTMLElement: HTMLElement;
+      contentHTMLElement: Element;
       spoiler: Spoiler;
     }[] = [];
     contents.forEach((content) => {
-      const videoTitleElement: HTMLElement =
-        content.querySelector("#video-title");
+      const videoTitleElement = content.querySelector(
+        "#video-title"
+      ) as HTMLElement;
       if (videoTitleElement == null) {
         return;
       }
@@ -71,7 +72,7 @@ window.addEventListener("load", async (event) => {
 
     const blocker = new VideoSpoilerFilter(config);
     let caches: {
-      [elementId: string]: HTMLElement;
+      [elementId: string]: Element;
     } = {};
 
     // Block contents every 5 seconds. This is because

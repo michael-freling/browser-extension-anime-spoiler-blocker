@@ -56,12 +56,12 @@ export class TextSpoilerAnalyzer {
     let season;
     let matches = text.match(/(season\s|S)(?<season>[0-9]+)/i);
     if (matches) {
-      season = parseInt(matches.groups.season, 10);
+      season = parseInt(matches.groups!.season, 10);
     }
     let episode;
     matches = text.match(/(episode\s|Ep\s?)(?<episode>[0-9]+)/i);
     if (matches) {
-      episode = parseInt(matches.groups.episode, 10);
+      episode = parseInt(matches.groups!.episode, 10);
     }
     if (season == undefined && episode == undefined) {
       return {
@@ -96,6 +96,12 @@ export class TextSpoilerAnalyzer {
         config.keywords
       );
       if (episodeFromText == null) {
+        return;
+      }
+
+      // if no season, it's a spoiler
+      if (episodeFromText.season == null) {
+        result = episodeFromText;
         return;
       }
 
