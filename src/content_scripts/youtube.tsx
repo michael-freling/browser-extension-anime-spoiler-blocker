@@ -9,7 +9,8 @@ if (exports === undefined) {
 const extensionId = "elifmnfcgkjlbclbglicfkbcdomkibdb";
 
 interface ConfigContent {
-  titles: string[];
+  title: string;
+  keywords: string[];
   history: {
     season: number;
     episode: number;
@@ -22,16 +23,22 @@ interface Config {
   };
 }
 
+interface VideoMetadata {
+  title: string;
+  season: number;
+  episode: number;
+}
+
 class SpoilerFilter {
   config: Config;
 
   constructor(config: Config) {
     Object.keys(config.contents).forEach((contentId) => {
-      config.contents[contentId].titles = config.contents[contentId].titles.map(
-        (title) => {
-          return title.toLowerCase();
-        }
-      );
+      config.contents[contentId].keywords = config.contents[
+        contentId
+      ].keywords.map((keyword) => {
+        return keyword.toLowerCase();
+      });
     });
 
     this.config = config;
@@ -50,20 +57,17 @@ class SpoilerFilter {
     return contents;
   }
 
-  filterVideoTitle(title: string, config: ConfigContent): boolean {
+  getVideoMetadata(title: string, config: ConfigContent): VideoMetadata {
     title = title.toLowerCase();
-    let isTitleMatched = false;
-    config.titles.forEach((configTitle) => {
-      if (title.includes(configTitle)) {
-        isTitleMatched = true;
+    let titleFound = false;
+    config.keywords.forEach((configKeyword) => {
+      if (title.includes(configKeyword)) {
+        titleFound = true;
       }
     });
-    if (!isTitleMatched) {
-      return false;
+    if (!titleFound) {
+      return;
     }
-
-    const lastSeason = config.history.season;
-    const lastEpisode = config.history.episode;
 
     // TODO: Currently, both of season and episode are required to be matched
     // TODO: season 2 part 2 episode X can be happening
@@ -74,36 +78,31 @@ class SpoilerFilter {
 
     console.debug({
       title,
-      isTitleMatched,
-      titles: config.titles,
       matches,
-      lastSeason,
-      lastEpisode,
     });
 
     if (!matches) {
-      return false;
+      return;
     }
+
     const titleSeason = parseInt(matches[2], 10);
-    if (titleSeason < lastSeason) {
-      return false;
-    }
-    if (titleSeason > lastSeason) {
-      return true;
-    }
-    // if the title doesn't include an episode, conservatively recognize the video as a spoiler
-    // if (matches.length == 2) {
-    //   return false;
-    // }
     const titleEpisode = parseInt(matches[4], 10);
-    if (titleEpisode <= lastEpisode) {
-      return false;
-    }
-    return true;
+
+    return {
+      title: config.title,
+      season: titleSeason,
+      episode: titleEpisode,
+    };
   }
 
-  filter(contents: Array<HTMLElement>): Array<HTMLElement> {
-    const result = [];
+  filter(contents: Array<HTMLElement>): {
+    contentHTMLElement: HTMLElement;
+    metadata: VideoMetadata;
+  }[] {
+    const result: {
+      contentHTMLElement: HTMLElement;
+      metadata: VideoMetadata;
+    }[] = [];
     contents.forEach((content) => {
       const videoTitleElement: HTMLElement =
         content.querySelector("#video-title");
@@ -112,13 +111,35 @@ class SpoilerFilter {
       }
 
       Object.keys(this.config.contents).forEach((contentId) => {
+        const config = this.config.contents[contentId];
         const videoTitle: string = videoTitleElement.innerText;
-        if (
-          this.filterVideoTitle(videoTitle, this.config.contents[contentId])
-        ) {
-          result.push(content);
+        const videoMetadata = this.getVideoMetadata(videoTitle, config);
+        if (videoMetadata == null) {
           return;
         }
+
+        const lastSeason = config.history.season;
+        const lastEpisode = config.history.episode;
+
+        if (videoMetadata.season < lastSeason) {
+          return;
+        }
+        if (
+          videoMetadata.season == lastSeason &&
+          videoMetadata.episode <= lastEpisode
+        ) {
+          return;
+        }
+        // if the title doesn't include an episode, conservatively recognize the video as a spoiler
+        // if (matches.length == 2) {
+        //   return false;
+        // }
+
+        result.push({
+          contentHTMLElement: content,
+          metadata: videoMetadata,
+        });
+        return;
       });
     });
     return result;
@@ -153,16 +174,22 @@ window.addEventListener("load", async (event) => {
       }
 
       const filteredContents = filter.filter(contents);
-      filteredContents.forEach((content) => {
-        if (caches[content.id]) {
+      filteredContents.forEach(({ contentHTMLElement, metadata }) => {
+        if (caches[contentHTMLElement.id]) {
           // do not mount if it's already mounted
           return;
         }
 
-        caches[content.id] = content;
-        ReactDOM.createRoot(content).render(
+        caches[contentHTMLElement.id] = contentHTMLElement;
+        const originalContent = contentHTMLElement.cloneNode(
+          true
+        ) as HTMLElement;
+        ReactDOM.createRoot(contentHTMLElement).render(
           <StrictMode>
-            <FilteredContent />
+            <FilteredContent
+              metadata={metadata}
+              originalContent={originalContent}
+            />
           </StrictMode>
         );
       });
