@@ -1,0 +1,25 @@
+{
+  "contents": {
+    "Demon Slayer": {
+      "titles": ["Demon Slayer"],
+      "history": {
+        "season": 2,
+        "episode": 1
+      }
+    },
+    "Jujutsu Kaisen": {
+      "titles": ["Jujutsu Kaisen"],
+      "history": {
+        "season": 1,
+        "episode": 24
+      }
+    },
+    "Mushoku Tensei": {
+      "titles": ["Mushoku Tensei", "Jobless Reincarnation"],
+      "history": {
+        "season": 2,
+        "episode": 1
+      }
+    }
+  }
+}

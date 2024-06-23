@@ -1,12 +1,32 @@
 const extensionId = "elifmnfcgkjlbclbglicfkbcdomkibdb";
 
-class SpoilerFilter {
-  forbiddenWords: string[];
+interface ConfigContent {
+  titles: string[];
+  history: {
+    season: number;
+    episode: number;
+  };
+}
 
-  constructor(forbiddenWords) {
-    this.forbiddenWords = forbiddenWords.map((word) => {
-      return word.toLowerCase();
+interface Config {
+  contents: {
+    [contentId: string]: ConfigContent;
+  };
+}
+
+class SpoilerFilter {
+  config: Config;
+
+  constructor(config: Config) {
+    Object.keys(config.contents).forEach((contentId) => {
+      config.contents[contentId].titles = config.contents[contentId].titles.map(
+        (title) => {
+          return title.toLowerCase();
+        }
+      );
     });
+
+    this.config = config;
   }
 
   readContents(): Array<HTMLElement> {
@@ -22,6 +42,58 @@ class SpoilerFilter {
     return contents;
   }
 
+  filterVideoTitle(title: string, config: ConfigContent): boolean {
+    title = title.toLowerCase();
+    let isTitleMatched = false;
+    config.titles.forEach((configTitle) => {
+      if (title.includes(configTitle)) {
+        isTitleMatched = true;
+      }
+    });
+    if (!isTitleMatched) {
+      return false;
+    }
+
+    const lastSeason = config.history.season;
+    const lastEpisode = config.history.episode;
+
+    // TODO: Currently, both of season and episode are required to be matched
+    // TODO: season 2 part 2 episode X can be happening
+    // TODO: episode 19 (meaning season 1) can be happening
+    const matches = title.match(
+      /(season\s|S)([0-9]+).*(episode|Ep)\s([0-9]+)/i
+    );
+
+    console.debug({
+      title,
+      isTitleMatched,
+      titles: config.titles,
+      matches,
+      lastSeason,
+      lastEpisode,
+    });
+
+    if (!matches) {
+      return false;
+    }
+    const titleSeason = parseInt(matches[2], 10);
+    if (titleSeason < lastSeason) {
+      return false;
+    }
+    if (titleSeason > lastSeason) {
+      return true;
+    }
+    // if the title doesn't include an episode, conservatively recognize the video as a spoiler
+    // if (matches.length == 2) {
+    //   return false;
+    // }
+    const titleEpisode = parseInt(matches[4], 10);
+    if (titleEpisode <= lastEpisode) {
+      return false;
+    }
+    return true;
+  }
+
   filter(contents: Array<HTMLElement>): Array<HTMLElement> {
     const result = [];
     contents.forEach((content) => {
@@ -31,9 +103,11 @@ class SpoilerFilter {
         return;
       }
 
-      this.forbiddenWords.forEach((forbiddenWord) => {
-        const title: string = videoTitleElement.innerText;
-        if (title.toLowerCase().includes(forbiddenWord)) {
+      Object.keys(this.config.contents).forEach((contentId) => {
+        const videoTitle: string = videoTitleElement.innerText;
+        if (
+          this.filterVideoTitle(videoTitle, this.config.contents[contentId])
+        ) {
           result.push(content);
           return;
         }
@@ -47,14 +121,14 @@ class SpoilerFilter {
 window.addEventListener("load", async (event) => {
   try {
     // Sends a message to the service worker and receives a tip in response
-    const { words } = await chrome.runtime.sendMessage(extensionId, {
+    const { config } = await chrome.runtime.sendMessage(extensionId, {
       event: event,
     });
-    console.log({
-      words,
+    console.debug({
+      config,
     });
 
-    const filter = new SpoilerFilter(words);
+    const filter = new SpoilerFilter(config);
 
     // Filter contents every 5 seconds. This is because
     // 1. Some contents are not available when a page is loaded

@@ -21,6 +21,12 @@
   "externally_connectable": {
     "matches": ["https://*.youtube.com/*"]
   },
+  "web_accessible_resources": [
+    {
+      "resources": ["data/*.json"],
+      "matches": ["https://*.youtube.com/*"]
+    }
+  ],
   "host_permissions": ["<all_urls>"],
   "permissions": ["storage"]
 }
