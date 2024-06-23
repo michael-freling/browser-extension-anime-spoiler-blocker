@@ -6,8 +6,6 @@ if (exports === undefined) {
   var exports = {};
 }
 
-const extensionId = "bihgndcmdfolacndjgodbfgphlbdcden";
-
 interface ConfigContent {
   title: string;
   keywords: string[];
@@ -150,9 +148,12 @@ class SpoilerBlocker {
 window.addEventListener("load", async (event) => {
   try {
     // Sends a message to the service worker and receives a tip in response
-    const { config } = await chrome.runtime.sendMessage(extensionId, {
-      event: event,
-    });
+    const { config } = await chrome.runtime.sendMessage(
+      process.env.EXTENSION_ID,
+      {
+        event: event,
+      }
+    );
     console.debug({
       config,
     });
