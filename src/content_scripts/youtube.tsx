@@ -4,10 +4,10 @@ import ReactDOM from "react-dom/client";
 import { Config, TextSpoilerAnalyzer, Spoiler } from "../spoiler";
 
 class VideoSpoilerFilter {
-  textParser: TextSpoilerAnalyzer;
+  textAnalyzer: TextSpoilerAnalyzer;
 
-  constructor(config: Config) {
-    this.textParser = new TextSpoilerAnalyzer(config);
+  constructor(analyzer: TextSpoilerAnalyzer) {
+    this.textAnalyzer = analyzer;
   }
 
   readContents(): Element[] {
@@ -39,7 +39,7 @@ class VideoSpoilerFilter {
         return;
       }
 
-      const videoSpoiler = this.textParser.extractSpoiler(
+      const videoSpoiler = this.textAnalyzer.extractSpoiler(
         videoTitleElement.innerText
       );
       if (videoSpoiler.title == "") {
@@ -60,7 +60,7 @@ class VideoSpoilerFilter {
 window.addEventListener("load", async (event) => {
   try {
     // Sends a message to the service worker and receives a tip in response
-    const { config } = await chrome.runtime.sendMessage(
+    const { config, userHistory } = await chrome.runtime.sendMessage(
       process.env.EXTENSION_ID,
       {
         event: event,
@@ -68,9 +68,12 @@ window.addEventListener("load", async (event) => {
     );
     console.debug({
       config,
+      userHistory,
     });
 
-    const blocker = new VideoSpoilerFilter(config);
+    const blocker = new VideoSpoilerFilter(
+      new TextSpoilerAnalyzer(config, userHistory)
+    );
     let caches: {
       [elementId: string]: Element;
     } = {};

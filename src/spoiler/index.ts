@@ -1,15 +1,26 @@
 export interface Config {
-  contents: {
-    [contentId: string]: ConfigContent;
+  series: {
+    [seriesID: string]: SeriesConfig;
   };
 }
 
-export interface ConfigContent {
+export interface SeriesConfig {
   title: string;
   keywords: string[];
-  history: {
-    season: number;
-    episode: number;
+}
+
+enum MediaType {
+  TVShows = "tv",
+}
+
+export interface UserHistory {
+  series: {
+    [seriesID: string]: {
+      [MediaType.TVShows]: {
+        season: number;
+        episode: number;
+      };
+    };
   };
 }
 
@@ -21,17 +32,19 @@ export interface Spoiler {
 
 export class TextSpoilerAnalyzer {
   config: Config;
+  userHistory: UserHistory;
 
-  constructor(config: Config) {
-    Object.keys(config.contents).forEach((contentId) => {
-      config.contents[contentId].keywords = config.contents[
-        contentId
-      ].keywords.map((keyword) => {
-        return keyword.toLowerCase();
-      });
+  constructor(config: Config, userHistory: UserHistory) {
+    Object.keys(config.series).forEach((contentId) => {
+      config.series[contentId].keywords = config.series[contentId].keywords.map(
+        (keyword) => {
+          return keyword.toLowerCase();
+        }
+      );
     });
 
     this.config = config;
+    this.userHistory = userHistory;
   }
 
   extractEpisodeFromText(
@@ -89,7 +102,7 @@ export class TextSpoilerAnalyzer {
       season: 0,
       episode: 0,
     };
-    Object.entries(this.config.contents).forEach(([_, config]) => {
+    Object.entries(this.config.series).forEach(([seriesId, config]) => {
       const episodeFromText = this.extractEpisodeFromText(
         text,
         config.title,
@@ -105,13 +118,14 @@ export class TextSpoilerAnalyzer {
         return;
       }
 
-      if (episodeFromText.season < config.history.season) {
+      const allowedEpisode = this.userHistory.series[seriesId].tv;
+      if (episodeFromText.season < allowedEpisode.season) {
         return;
       }
       if (
-        episodeFromText.season == config.history.season &&
+        episodeFromText.season == allowedEpisode.season &&
         (episodeFromText.episode == undefined ||
-          episodeFromText.episode <= config.history.episode)
+          episodeFromText.episode <= allowedEpisode.episode)
       ) {
         return;
       }

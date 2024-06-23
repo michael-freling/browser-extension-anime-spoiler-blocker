@@ -1,4 +1,4 @@
-import { Config } from "../spoiler";
+import { Config, UserHistory } from "../spoiler";
 
 const storage = chrome.storage.sync;
 
@@ -9,7 +9,7 @@ const storage = chrome.storage.sync;
 chrome.runtime.onMessageExternal.addListener(
   (message, sender, sendResponse) => {
     // TODO: verify a sender
-    storage.get("config").then(sendResponse);
+    storage.get(["config", "userHistory"]).then(sendResponse);
     return true;
   }
 );
@@ -17,20 +17,29 @@ chrome.runtime.onMessageExternal.addListener(
 // TODO: Set a default configuration only when it's the first time
 async function main() {
   try {
-    const url = chrome.runtime.getURL("data/default.json");
-    const response = await fetch(url);
-    if (response.status != 200) {
-      throw new Error("failed to fetch default.json");
-    }
-    const body: Config = await response.json();
+    const configFiles = [
+      "assets/data/default_config.json",
+      "assets/data/user_history_example.json",
+    ];
+    const responses = await Promise.all(
+      configFiles.map(async (configFile) => {
+        const url = chrome.runtime.getURL(configFile);
+        const response = await fetch(url);
+        if (response.status != 200) {
+          throw new Error("failed to fetch default.json");
+        }
+        return await response.json();
+      })
+    );
+    const config: Config = responses[0];
+    const userHistory: UserHistory = responses[1];
 
     storage.set({
-      config: body,
+      config,
+      userHistory,
     });
   } catch (error) {
-    console.error("failed to run main", {
-      error: error,
-    });
+    console.error("failed to run main", error);
   }
 }
 

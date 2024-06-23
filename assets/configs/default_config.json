@@ -1,0 +1,16 @@
+{
+  "series": {
+    "demon_slayer": {
+      "title": "Demon Slayer",
+      "keywords": ["Demon Slayer"]
+    },
+    "jujutsu_kaisen": {
+      "title": "Jujutsu Kaisen",
+      "keywords": ["Jujutsu Kaisen"]
+    },
+    "mushoku_tensei": {
+      "title": "Mushoku Tensei",
+      "keywords": ["Mushoku Tensei", "Jobless Reincarnation"]
+    }
+  }
+}

@@ -23,7 +23,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["data/*.json"],
+      "resources": ["assets/configs/*.json"],
       "matches": ["https://*.youtube.com/*"]
     }
   ],

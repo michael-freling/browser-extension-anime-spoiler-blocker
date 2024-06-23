@@ -73,18 +73,26 @@ describe("TextParser", () => {
         ...defaultTestCase,
         ...arg,
       };
-      const textParser = new TextSpoilerAnalyzer({
-        contents: {
-          test: {
-            keywords,
-            title: "",
-            history: {
-              season: 0,
-              episode: 0,
+      const textParser = new TextSpoilerAnalyzer(
+        {
+          series: {
+            test: {
+              keywords,
+              title: "",
             },
           },
         },
-      });
+        {
+          series: {
+            test: {
+              tv: {
+                season: 0,
+                episode: 0,
+              },
+            },
+          },
+        }
+      );
       const actual = textParser.extractEpisodeFromText(text, "Test", keywords);
       expect(actual).toEqual(expected);
     });
@@ -93,19 +101,27 @@ describe("TextParser", () => {
   describe("extractSpoilerEpisode", () => {
     const defaultTestCase = {
       config: {
-        contents: {
+        series: {
           test1: {
             title: "Test",
             keywords: ["test1", "keyword1"],
-            history: {
+          },
+          test2: {
+            title: "Test2",
+            keywords: ["test2"],
+          },
+        },
+      },
+      userHistory: {
+        series: {
+          test1: {
+            tv: {
               season: 1,
               episode: 2,
             },
           },
           test2: {
-            title: "Test2",
-            keywords: ["test2"],
-            history: {
+            tv: {
               season: 2,
               episode: 1,
             },
@@ -171,11 +187,11 @@ describe("TextParser", () => {
       },
     ];
     test.each(testCases)("$name", (arg) => {
-      const { config, text, expected } = {
+      const { config, userHistory, text, expected } = {
         ...defaultTestCase,
         ...arg,
       };
-      const textParser = new TextSpoilerAnalyzer(config);
+      const textParser = new TextSpoilerAnalyzer(config, userHistory);
       const actual = textParser.extractSpoiler(text);
       expect(actual).toEqual(expected);
     });

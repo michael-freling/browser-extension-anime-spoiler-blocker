@@ -1,0 +1,22 @@
+{
+  "series": {
+    "demon_slayer": {
+      "tv": {
+        "season": 2,
+        "episode": 1
+      }
+    },
+    "jujutsu_kaisen": {
+      "tv": {
+        "season": 1,
+        "episode": 24
+      }
+    },
+    "mushoku_tensei": {
+      "tv": {
+        "season": 2,
+        "episode": 1
+      }
+    }
+  }
+}
