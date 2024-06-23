@@ -1,16 +1,13 @@
 import { useState } from "react";
+import { Spoiler } from "../spoiler";
 
 interface BlockedContentProps {
-  metadata: {
-    title: string;
-    season: number;
-    episode: number;
-  };
+  spoiler: Spoiler;
   originalContent: HTMLElement;
 }
 
 export function BlockedContent({
-  metadata,
+  spoiler,
   originalContent,
 }: BlockedContentProps) {
   const [isBlocked, setBlocked] = useState(true);
@@ -39,8 +36,8 @@ export function BlockedContent({
     >
       <div>Blocked by an spoiler blocker extension</div>
       <div>
-        This is a content for a {metadata.title} Season {metadata.season}{" "}
-        Episode {metadata.episode}{" "}
+        This is a content for a {spoiler.title} Season {spoiler.season} Episode{" "}
+        {spoiler.episode}{" "}
       </div>
       <button onClick={() => setBlocked(false)} disabled={true}>
         Show the original content. (Doesn't work)

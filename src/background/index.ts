@@ -1,3 +1,5 @@
+import { Config } from "../spoiler";
+
 const storage = chrome.storage.sync;
 
 // sendResponse doesn't work within an async function
@@ -20,7 +22,7 @@ async function main() {
     if (response.status != 200) {
       throw new Error("failed to fetch default.json");
     }
-    const body = await response.json();
+    const body: Config = await response.json();
 
     storage.set({
       config: body,

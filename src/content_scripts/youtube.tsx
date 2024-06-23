@@ -1,45 +1,13 @@
 import { BlockedContent } from "./content";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
+import { Config, TextSpoilerAnalyzer, Spoiler } from "../spoiler";
 
-if (exports === undefined) {
-  var exports = {};
-}
-
-interface ConfigContent {
-  title: string;
-  keywords: string[];
-  history: {
-    season: number;
-    episode: number;
-  };
-}
-
-interface Config {
-  contents: {
-    [contentId: string]: ConfigContent;
-  };
-}
-
-interface VideoMetadata {
-  title: string;
-  season: number;
-  episode: number;
-}
-
-class SpoilerBlocker {
-  config: Config;
+class VideoSpoilerFilter {
+  textParser: TextSpoilerAnalyzer;
 
   constructor(config: Config) {
-    Object.keys(config.contents).forEach((contentId) => {
-      config.contents[contentId].keywords = config.contents[
-        contentId
-      ].keywords.map((keyword) => {
-        return keyword.toLowerCase();
-      });
-    });
-
-    this.config = config;
+    this.textParser = new TextSpoilerAnalyzer(config);
   }
 
   readContents(): Array<HTMLElement> {
@@ -55,51 +23,13 @@ class SpoilerBlocker {
     return contents;
   }
 
-  getVideoMetadata(title: string, config: ConfigContent): VideoMetadata {
-    title = title.toLowerCase();
-    let titleFound = false;
-    config.keywords.forEach((configKeyword) => {
-      if (title.includes(configKeyword)) {
-        titleFound = true;
-      }
-    });
-    if (!titleFound) {
-      return;
-    }
-
-    // TODO: Currently, both of season and episode are required to be matched
-    // TODO: season 2 part 2 episode X can be happening
-    // TODO: episode 19 (meaning season 1) can be happening
-    const matches = title.match(
-      /(season\s|S)([0-9]+).*(episode|Ep)\s([0-9]+)/i
-    );
-
-    console.debug({
-      title,
-      matches,
-    });
-
-    if (!matches) {
-      return;
-    }
-
-    const titleSeason = parseInt(matches[2], 10);
-    const titleEpisode = parseInt(matches[4], 10);
-
-    return {
-      title: config.title,
-      season: titleSeason,
-      episode: titleEpisode,
-    };
-  }
-
   filter(contents: Array<HTMLElement>): {
     contentHTMLElement: HTMLElement;
-    metadata: VideoMetadata;
+    spoiler: Spoiler;
   }[] {
     const result: {
       contentHTMLElement: HTMLElement;
-      metadata: VideoMetadata;
+      spoiler: Spoiler;
     }[] = [];
     contents.forEach((content) => {
       const videoTitleElement: HTMLElement =
@@ -108,37 +38,18 @@ class SpoilerBlocker {
         return;
       }
 
-      Object.keys(this.config.contents).forEach((contentId) => {
-        const config = this.config.contents[contentId];
-        const videoTitle: string = videoTitleElement.innerText;
-        const videoMetadata = this.getVideoMetadata(videoTitle, config);
-        if (videoMetadata == null) {
-          return;
-        }
-
-        const lastSeason = config.history.season;
-        const lastEpisode = config.history.episode;
-
-        if (videoMetadata.season < lastSeason) {
-          return;
-        }
-        if (
-          videoMetadata.season == lastSeason &&
-          videoMetadata.episode <= lastEpisode
-        ) {
-          return;
-        }
-        // if the title doesn't include an episode, conservatively recognize the video as a spoiler
-        // if (matches.length == 2) {
-        //   return false;
-        // }
-
-        result.push({
-          contentHTMLElement: content,
-          metadata: videoMetadata,
-        });
+      const videoSpoiler = this.textParser.extractSpoiler(
+        videoTitleElement.innerText
+      );
+      if (videoSpoiler.title == "") {
         return;
+      }
+
+      result.push({
+        contentHTMLElement: content,
+        spoiler: videoSpoiler,
       });
+      return;
     });
     return result;
   }
@@ -158,7 +69,7 @@ window.addEventListener("load", async (event) => {
       config,
     });
 
-    const blocker = new SpoilerBlocker(config);
+    const blocker = new VideoSpoilerFilter(config);
     let caches: {
       [elementId: string]: HTMLElement;
     } = {};
@@ -175,7 +86,7 @@ window.addEventListener("load", async (event) => {
       }
 
       const blockedContents = blocker.filter(contents);
-      blockedContents.forEach(({ contentHTMLElement, metadata }) => {
+      blockedContents.forEach(({ contentHTMLElement, spoiler }) => {
         if (caches[contentHTMLElement.id]) {
           // do not mount if it's already mounted
           return;
@@ -188,7 +99,7 @@ window.addEventListener("load", async (event) => {
         ReactDOM.createRoot(contentHTMLElement).render(
           <StrictMode>
             <BlockedContent
-              metadata={metadata}
+              spoiler={spoiler}
               originalContent={originalContent}
             />
           </StrictMode>
