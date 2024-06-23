@@ -44,9 +44,11 @@ export function BlockedContent({
     >
       <div>Blocked by an spoiler blocker extension</div>
       <div>This is a content for a {details}</div>
+      {/*
       <button onClick={() => setBlocked(false)} disabled={true}>
         Show the original content. (Doesn't work)
       </button>
+      */}
     </div>
   );
 }

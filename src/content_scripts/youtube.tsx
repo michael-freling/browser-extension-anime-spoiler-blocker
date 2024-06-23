@@ -2,6 +2,7 @@ import { BlockedContent } from "./content";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { Config, TextSpoilerAnalyzer, Spoiler } from "../spoiler";
+import { getXPathFromElement } from "../dom/xpath";
 
 class VideoSpoilerFilter {
   textAnalyzer: TextSpoilerAnalyzer;
@@ -16,7 +17,12 @@ class VideoSpoilerFilter {
     const pageContents = document.querySelectorAll("#contents");
     const contents: Element[] = [];
     pageContents.forEach((pageContent) => {
-      pageContent.querySelectorAll("#content").forEach((content) => {
+      // Top page
+      // pageContent.querySelectorAll("#content").forEach((content) => {
+      //   contents.push(content);
+      // });
+      // Search page
+      pageContent.querySelectorAll("#dismissible").forEach((content) => {
         contents.push(content);
       });
     });
@@ -31,6 +37,7 @@ class VideoSpoilerFilter {
       contentHTMLElement: Element;
       spoiler: Spoiler;
     }[] = [];
+
     contents.forEach((content) => {
       const videoTitleElement = content.querySelector(
         "#video-title"
@@ -91,15 +98,17 @@ window.addEventListener("load", async (event) => {
 
       const blockedContents = blocker.filter(contents);
       blockedContents.forEach(({ contentHTMLElement, spoiler }) => {
-        if (caches[contentHTMLElement.id]) {
-          // do not mount if it's already mounted
+        const cacheKey = getXPathFromElement(contentHTMLElement);
+        // contentHTMLElement.id is not unique and cannot be used as a cache key
+        if (caches[cacheKey]) {
+          // do not mount a react component if it's already mounted
           return;
         }
 
-        caches[contentHTMLElement.id] = contentHTMLElement;
         const originalContent = contentHTMLElement.cloneNode(
           true
         ) as HTMLElement;
+        caches[cacheKey] = originalContent;
         ReactDOM.createRoot(contentHTMLElement).render(
           <StrictMode>
             <BlockedContent
