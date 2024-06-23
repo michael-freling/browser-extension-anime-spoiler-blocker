@@ -1,3 +1,11 @@
+import { FilteredContent } from "./content";
+import { StrictMode } from "react";
+import ReactDOM from "react-dom/client";
+
+if (exports === undefined) {
+  var exports = {};
+}
+
 const extensionId = "elifmnfcgkjlbclbglicfkbcdomkibdb";
 
 interface ConfigContent {
@@ -129,6 +137,9 @@ window.addEventListener("load", async (event) => {
     });
 
     const filter = new SpoilerFilter(config);
+    let caches: {
+      [elementId: string]: HTMLElement;
+    } = {};
 
     // Filter contents every 5 seconds. This is because
     // 1. Some contents are not available when a page is loaded
@@ -143,7 +154,17 @@ window.addEventListener("load", async (event) => {
 
       const filteredContents = filter.filter(contents);
       filteredContents.forEach((content) => {
-        content.innerHTML = "Removed by a spoiler filter";
+        if (caches[content.id]) {
+          // do not mount if it's already mounted
+          return;
+        }
+
+        caches[content.id] = content;
+        ReactDOM.createRoot(content).render(
+          <StrictMode>
+            <FilteredContent />
+          </StrictMode>
+        );
       });
       console.debug("Completed to filter contents");
     }, 5000);

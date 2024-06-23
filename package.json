@@ -3,12 +3,24 @@
   "version": "0.0.1",
   "description": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "watch": "webpack --watch --mode=development"
   },
   "author": "michael-freling",
   "license": "ISC",
   "devDependencies": {
     "@types/chrome": "^0.0.268",
-    "typescript": "^5.4.5"
-  }
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.4.5",
+    "webpack": "^5.92.1",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "browser": [
+    "chrome"
+  ]
 }

@@ -1,16 +1,20 @@
 {
     "compilerOptions": {
         "strict": false,
-        "module": "commonjs",
-        "target": "es6",
+        "module": "ES2015",
+        "moduleResolution": "Node",
+        "target": "ES2015",
         "esModuleInterop": true,
         "sourceMap": true,
         "rootDir": "src",
         "outDir": "build/js",
         "noEmitOnError": true,
         "typeRoots": [
-            "node_modules/@types",
-            "node_modules/chrome-types"
-        ]
-    }
+            "node_modules/@types"
+        ],
+        "jsx": "react-jsx"
+    },
+    "include": [
+      "src"
+    ]
 }
