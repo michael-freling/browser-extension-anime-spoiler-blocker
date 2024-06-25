@@ -1,0 +1,34 @@
+name: Releases
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".node-version"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      # Create a GitHub release from the dist and a tag
+      # https://github.com/ncipollo/release-action
+      # https://earthly.dev/blog/github-action-artifacts/
+      - run: zip -r extension.zip dist/
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "extension.zip"
+          # Following fields are for debugging
+          # allowUpdates: true
+          # tag: "v0.0.1"
