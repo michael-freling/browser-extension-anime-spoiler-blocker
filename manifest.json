@@ -18,6 +18,10 @@
       "matches": ["https://www.youtube.com/*"],
       "world": "MAIN",
       "js": ["js/content_scripts/youtube.js"]
+    },
+    {
+      "matches": ["https://www.crunchyroll.com/*"],
+      "js": ["js/content_scripts/crunchyroll.js"]
     }
   ],
   "externally_connectable": {

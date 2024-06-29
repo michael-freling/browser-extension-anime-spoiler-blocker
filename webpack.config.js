@@ -11,6 +11,7 @@ module.exports = {
   entry: {
     "js/background/index": "./src/background/index",
     "js/content_scripts/youtube": "./src/content_scripts/youtube",
+    "js/content_scripts/crunchyroll": "./src/content_scripts/crunchyroll",
     "js/options/index": "./src/options/index",
   },
   output: {
