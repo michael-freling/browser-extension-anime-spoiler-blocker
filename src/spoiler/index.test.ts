@@ -81,6 +81,7 @@ describe("TextParser", () => {
               title: "",
             },
           },
+          services: {},
         },
         {
           series: {
@@ -111,6 +112,7 @@ describe("TextParser", () => {
             keywords: ["test2"],
           },
         },
+        services: {},
       },
       userHistory: {
         series: {

@@ -8,9 +8,31 @@
       "title": "Jujutsu Kaisen",
       "keywords": ["Jujutsu Kaisen"]
     },
+    "my_hero_academia": {
+      "title": "My Hero Academia",
+      "keywords": ["My Hero Academia"]
+    },
     "mushoku_tensei": {
       "title": "Mushoku Tensei",
       "keywords": ["Mushoku Tensei", "Jobless Reincarnation"]
+    }
+  },
+  "services": {
+    "crunchyroll": {
+      "series": {
+        "demon_slayer": {
+          "title": "Demon Slayer: Kimetsu no Yaiba"
+        },
+        "jujutsu_kaisen": {
+          "title": "Jujutsu Kaisen"
+        },
+        "my_hero_academia": {
+          "title": "My Hero Academia"
+        },
+        "mushoku_tensei": {
+          "title": "Mushoku Tensei: Jobless Reincarnation"
+        }
+      }
     }
   }
 }

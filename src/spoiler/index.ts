@@ -2,6 +2,15 @@ export interface Config {
   series: {
     [seriesID: string]: SeriesConfig;
   };
+  services: {
+    [serviceName: string]: {
+      series: {
+        [seriesID: string]: {
+          title: string;
+        };
+      };
+    };
+  };
 }
 
 export interface SeriesConfig {

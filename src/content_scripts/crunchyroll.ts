@@ -36,13 +36,27 @@ export function parseTitle(title: string): ParsedTitle | null {
   };
 }
 
+interface Cache {
+  data: {
+    [key: string]: boolean;
+  };
+  set: (key: string, callback: () => void) => void;
+}
+
+const cache: Cache = {
+  data: {},
+  set: function (key: string, callback: () => void) {
+    if (cache.data[key] == null) {
+      callback();
+      cache.data[key] = true;
+    }
+  },
+};
+
 // Listen for messages
 // TODO: Refactor to get a title only when the page is updated from a background: https://medium.com/@softvar/making-chrome-extension-smart-by-supporting-spa-websites-1f76593637e8
-const caches: { [key: string]: boolean } = {};
-
 async function onLoad() {
   const url = window.location;
-  console.log({ url });
   const episodeRegex = /\/watch\/[a-zA-Z0-9]*\/[\?\/]*/;
   if (!url.pathname.match(episodeRegex)) {
     return;
@@ -58,14 +72,18 @@ async function onLoad() {
   if (titleContent == null) {
     return;
   }
-  if (caches[titleContent] != null) {
+  if (cache.data[titleContent] != null) {
     return;
   }
-  caches[titleContent] = true;
-
-  const episode = parseTitle(titleContent);
-  // TODO Overwrite a data on a storage
-  console.log(episode);
+  cache.set(titleContent, () => {
+    const episode = parseTitle(titleContent);
+    chrome.runtime.sendMessage({
+      ...episode,
+      type: "updateWatchHistory",
+      webServiceName: "crunchyroll",
+      mediaType: "tv",
+    });
+  });
 }
 
 window.addEventListener("load", async () => {

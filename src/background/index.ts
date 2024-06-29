@@ -21,6 +21,81 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   }
 });
 
+interface UpdateWatchHistoryMessage {
+  type: "updateWatchHistory";
+  webServiceName: string;
+  mediaType: string;
+  series: string;
+  season: number;
+  episode: number;
+}
+
+interface Message extends UpdateWatchHistoryMessage {}
+
+chrome.runtime.onMessage.addListener(
+  (message: Message, sender, sendResponse) => {
+    switch (message.type) {
+      case "updateWatchHistory":
+        // no support other than tv shows
+        if (message.mediaType != "tv") {
+          return;
+        }
+
+        storage
+          .get(["config", "userHistory"])
+          .then(async ({ config, userHistory }) => {
+            if (config.services[message.webServiceName] == null) {
+              return;
+            }
+
+            let result;
+            Object.entries(
+              (config as Config).services[message.webServiceName].series
+            ).forEach(([seriesID, thisSeries]) => {
+              if (thisSeries.title == message.series) {
+                result = seriesID;
+                return;
+              }
+            });
+
+            if (result == null) {
+              return;
+            }
+            if (userHistory.series[result] == null) {
+              userHistory.series[result] = {
+                tv: {
+                  season: 0,
+                  episode: 0,
+                },
+              };
+            }
+            if (message.season < userHistory.series[result].tv.season) {
+              return;
+            }
+            if (
+              message.season == userHistory.series[result].tv.season &&
+              message.episode <= userHistory.series[result].tv.episode
+            ) {
+              return;
+            }
+
+            userHistory.series[result].tv.season = message.season;
+            userHistory.series[result].tv.episode = message.episode;
+            await storage.set({
+              userHistory,
+            });
+            console.info("Updated a watch history", {
+              series: message.series,
+              season: userHistory.series[result].tv.season,
+              episode: userHistory.series[result].tv.episode,
+            });
+          });
+
+        return true;
+    }
+  }
+);
+
 async function onInstall() {
   try {
     const configFiles = [
