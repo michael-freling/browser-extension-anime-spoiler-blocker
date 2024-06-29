@@ -68,6 +68,7 @@ window.addEventListener("load", async (event) => {
   try {
     // Sends a message to the service worker and receives a tip in response
     const { config, userHistory } = await chrome.runtime.sendMessage(
+      // chrome.runtime.id,
       process.env.EXTENSION_ID,
       {
         event: event,

@@ -8,7 +8,12 @@ const storage = chrome.storage.sync;
 // https://developer.chrome.com/docs/extensions/develop/concepts/messaging#external-webpage
 chrome.runtime.onMessageExternal.addListener(
   (message, sender, sendResponse) => {
-    // TODO: verify a sender
+    // const extensionID = chrome.runtime.id;
+    // sender.id is undefined
+    if (sender.origin != "https://www.youtube.com") {
+      return;
+    }
+
     storage.get(["config", "userHistory"]).then(sendResponse);
     return true;
   }
