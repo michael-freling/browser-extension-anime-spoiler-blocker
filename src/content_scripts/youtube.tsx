@@ -66,18 +66,13 @@ class VideoSpoilerFilter {
 // Listen for messages from the main world
 window.addEventListener("load", async (event) => {
   try {
-    // Sends a message to the service worker and receives a tip in response
-    const { config, userHistory } = await chrome.runtime.sendMessage(
-      // chrome.runtime.id,
-      process.env.EXTENSION_ID,
-      {
-        event: event,
-      }
-    );
-    console.debug({
-      config,
-      userHistory,
+    const { config, userHistory } = await chrome.runtime.sendMessage({
+      type: "getConfig",
     });
+    // console.debug({
+    //   config,
+    //   userHistory,
+    // });
 
     const blocker = new VideoSpoilerFilter(
       new TextSpoilerAnalyzer(config, userHistory)
@@ -105,16 +100,18 @@ window.addEventListener("load", async (event) => {
           // do not mount a react component if it's already mounted
           return;
         }
+        const root = document.createElement("div");
+        contentHTMLElement.parentElement!.appendChild(root);
 
-        const originalContent = contentHTMLElement.cloneNode(
-          true
-        ) as HTMLElement;
-        caches[cacheKey] = originalContent;
-        ReactDOM.createRoot(contentHTMLElement).render(
+        caches[cacheKey] = contentHTMLElement;
+        ReactDOM.createRoot(root).render(
           <StrictMode>
             <BlockedContent
               spoiler={spoiler}
-              originalContent={originalContent}
+              originalContent={contentHTMLElement as HTMLElement}
+              originalContentDisplayStyle={
+                (contentHTMLElement as HTMLElement).style.display
+              }
             />
           </StrictMode>
         );

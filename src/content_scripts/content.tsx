@@ -1,26 +1,30 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Spoiler } from "../blocker";
 
 interface BlockedContentProps {
   spoiler: Spoiler;
   originalContent: HTMLElement;
+  originalContentDisplayStyle: string;
 }
 
 export function BlockedContent({
   spoiler,
   originalContent,
+  originalContentDisplayStyle,
 }: BlockedContentProps) {
   const [isBlocked, setBlocked] = useState(true);
 
+  useEffect(() => {
+    if (isBlocked) {
+      originalContent.style.display = "none";
+    } else {
+      originalContent.style.display = originalContentDisplayStyle;
+    }
+  }, [isBlocked]);
+
   if (!isBlocked) {
-    // Workaround to insert an HTMLElement, but it doesn't work at all
-    // https://stackoverflow.com/questions/49297334/react-how-to-add-htmlelement
-    return (
-      <div
-        key="non blocked"
-        dangerouslySetInnerHTML={{ __html: originalContent.innerHTML }}
-      />
-    );
+    // Hide the react content but show the original content
+    return <></>;
   }
 
   let details = spoiler.title;
@@ -40,15 +44,26 @@ export function BlockedContent({
         justifyContent: "center",
         height: "100%",
         fontSize: "1.5rem",
+        padding: "8px",
+
+        color: "#fff",
+        backgroundColor: "#cc4400",
       }}
     >
       <div>Blocked by an Anime Spoiler Blocker</div>
-      <div>This is a content for a {details}</div>
-      {/*
-      <button onClick={() => setBlocked(false)} disabled={true}>
-        Show the original content. (Doesn't work)
+      <div>This is the video for {details}</div>
+      <button
+        onClick={() => setBlocked(false)}
+        style={{
+          margin: "8px",
+          padding: "8px",
+          backgroundColor: "#cccc00",
+          color: "#222",
+          borderRadius: "8px",
+        }}
+      >
+        Unblock
       </button>
-      */}
     </div>
   );
 }

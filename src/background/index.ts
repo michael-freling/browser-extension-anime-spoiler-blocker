@@ -2,23 +2,6 @@ import { Config, UserHistory } from "../blocker";
 
 const storage = chrome.storage.sync;
 
-// sendResponse doesn't work within an async function
-// https://developer.chrome.com/docs/extensions/develop/concepts/messaging#simple
-// Use onMessageExternal from webpages like a main world
-// https://developer.chrome.com/docs/extensions/develop/concepts/messaging#external-webpage
-chrome.runtime.onMessageExternal.addListener(
-  (message, sender, sendResponse) => {
-    // const extensionID = chrome.runtime.id;
-    // sender.id is undefined
-    if (sender.origin != "https://www.youtube.com") {
-      return;
-    }
-
-    storage.get(["config", "userHistory"]).then(sendResponse);
-    return true;
-  }
-);
-
 // https://developer.chrome.com/docs/extensions/reference/api/runtime#event-onInstalled
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
@@ -35,11 +18,19 @@ interface UpdateWatchHistoryMessage {
   episode: number;
 }
 
-interface Message extends UpdateWatchHistoryMessage {}
+interface GetConfigMessage {
+  type: "getConfig";
+}
+
+type Message = UpdateWatchHistoryMessage | GetConfigMessage;
 
 chrome.runtime.onMessage.addListener(
   (message: Message, sender, sendResponse) => {
     switch (message.type) {
+      case "getConfig":
+        storage.get(["config", "userHistory"]).then(sendResponse);
+        return true;
+
       case "updateWatchHistory":
         // no support other than tv shows
         if (message.mediaType != "tv") {
