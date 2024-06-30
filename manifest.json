@@ -5,8 +5,10 @@
   "manifest_version": 3,
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw0LwSiKMa6KCXtddzHjBTvOeXKvOwmN+6TNI1ICprKNy4hCRWQf78TVDQ7dEePFPHmdStv40c1mX4yRtlqg9LPmQKtLPTy1LqobsGWjYCKZ31GaB9wwAIWOdLDOdAUUorS+E3QkwHndnR11eeRkrcGJVCV8r5HAeYjKutV6mB036MqhPtDMry4cVCAI5U3ZFREXxUBkZKsQYJqZHYDrmjQBvLHfhFrMJaO9YDU2c/vx+PP33P4tze902FWiDHcivQIOm9wI3Qyu47C/1zTZNtBiaHoLaZ21k67a6gDJna6bu6S9lDdjo3odVnCSPAJi2qMFBhiF3ElNsL7mDsxiKKwIDAQAB",
   "action": {
-    "default_popup": "assets/hello.html",
-    "default_icon": "assets/icon.png"
+    "default_popup": "assets/hello.html"
+  },
+  "icons": {
+    "128": "assets/icon.png"
   },
   "options_page": "assets/options.html",
   "background": {
