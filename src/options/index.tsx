@@ -23,7 +23,7 @@ function InputJSONField({
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
       <h2>
-        {label}.
+        {label}.{" "}
         {status == "saved" ? "Saved" : status == "editing" ? "Editing..." : ""}
       </h2>
       <textarea
@@ -40,7 +40,7 @@ function InputJSONField({
           setStatus("saved");
           setTimeout(() => {
             setStatus("no");
-          }, 5000);
+          }, 2000);
         }}
       />
     </div>
@@ -67,9 +67,10 @@ function Options() {
 
   return (
     <>
-      <h1>Options</h1>
+      <h1>Settings</h1>
+
       <InputJSONField
-        label={"Series data"}
+        label={"Anime configuration"}
         value={config}
         onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
           setConfig(event.target.value);
@@ -79,7 +80,7 @@ function Options() {
         }}
       />
       <InputJSONField
-        label={"Your series watch history"}
+        label={"Your watch history"}
         value={userHistory}
         onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
           setUserHistory(event.target.value);

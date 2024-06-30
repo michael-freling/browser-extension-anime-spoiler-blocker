@@ -13,6 +13,7 @@ module.exports = {
     "js/content_scripts/youtube": "./src/content_scripts/youtube",
     "js/content_scripts/crunchyroll": "./src/content_scripts/crunchyroll",
     "js/options/index": "./src/options/index",
+    "js/popup/index": "./src/popup/index",
   },
   output: {
     filename: "[name].js",

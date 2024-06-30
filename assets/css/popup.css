@@ -1,0 +1,23 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+ul {
+  list-style-type: "none";
+  display: block;
+  width: 100%;
+  color: "#888888";
+}
+
+li {
+  padding: 8px;
+  list-style-type: "none";
+  display: block;
+  cursor: pointer;
+  width: 100%;
+
+  &:hover {
+    background-color: #f0f0f0;
+  }
+}
