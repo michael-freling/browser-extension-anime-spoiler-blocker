@@ -1,4 +1,4 @@
-import { Config, UserHistory } from "../spoiler";
+import { Config, UserHistory } from "../blocker";
 
 const storage = chrome.storage.sync;
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Spoiler } from "../spoiler";
+import { Spoiler } from "../blocker";
 
 interface BlockedContentProps {
   spoiler: Spoiler;
@@ -42,7 +42,7 @@ export function BlockedContent({
         fontSize: "1.5rem",
       }}
     >
-      <div>Blocked by an spoiler blocker extension</div>
+      <div>Blocked by an Anime Spoiler Blocker</div>
       <div>This is a content for a {details}</div>
       {/*
       <button onClick={() => setBlocked(false)} disabled={true}>

@@ -1,7 +1,7 @@
 import { BlockedContent } from "./content";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-import { Config, TextSpoilerAnalyzer, Spoiler } from "../spoiler";
+import { Config, TextSpoilerAnalyzer, Spoiler } from "../blocker";
 import { getXPathFromElement } from "../dom/xpath";
 
 class VideoSpoilerFilter {

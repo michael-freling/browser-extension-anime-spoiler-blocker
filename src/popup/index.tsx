@@ -28,7 +28,7 @@ function Popup() {
             marginRight: "4px",
           }}
         />
-        Spoiler Blocker
+        Anime Spoiler Blocker
       </div>
       <ul>
         <li
