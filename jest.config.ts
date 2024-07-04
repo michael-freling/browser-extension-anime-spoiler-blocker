@@ -1,12 +1,11 @@
-import type { Config } from "@jest/types";
+import type { Config } from "jest";
 
-// Sync object
-const config: Config.InitialOptions = {
+// https://github.com/PlasmoHQ/examples/blob/main/with-jest/jest.config.mjs
+const config: Config = {
   verbose: true,
   transform: {
     "^.+\\.tsx?$": "ts-jest",
   },
-  testEnvironment: "jsdom",
 };
 
 export default config;

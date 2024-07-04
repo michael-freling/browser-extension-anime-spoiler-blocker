@@ -5,16 +5,18 @@
   ],
   "include": [
     ".plasmo/index.d.ts",
+    "jest.config.ts",
     "./**/*.ts",
     "./**/*.tsx"
   ],
   "compilerOptions": {
-    "jsx": "react",
+    "jsx": "react-jsx",
     "paths": {
       "~*": [
         "./src/*"
       ]
     },
-    "baseUrl": "."
+    "baseUrl": ".",
+    "verbatimModuleSyntax": false
   }
 }

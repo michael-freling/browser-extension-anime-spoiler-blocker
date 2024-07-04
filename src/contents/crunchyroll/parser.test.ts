@@ -1,4 +1,6 @@
-import { parseTitle } from "./crunchyroll";
+// Some @plasmo/XXX packages cannot be used in a jest
+// https://github.com/PlasmoHQ/plasmo/issues/938
+import { parseTitle } from "./parser";
 
 describe("parsedTitle", () => {
   test.each([
