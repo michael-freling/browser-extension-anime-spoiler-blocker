@@ -1,8 +1,14 @@
+import * as React from "react";
 import { BlockedContent } from "./content";
 import { StrictMode } from "react";
-import ReactDOM from "react-dom/client";
+import * as ReactDOM from "react-dom/client";
 import { Config, TextSpoilerAnalyzer, Spoiler } from "../blocker";
 import { getXPathFromElement } from "../dom/xpath";
+import type { PlasmoCSConfig } from "plasmo";
+
+export const config: PlasmoCSConfig = {
+  matches: ["https://www.youtube.com/*"],
+};
 
 class VideoSpoilerFilter {
   textAnalyzer: TextSpoilerAnalyzer;

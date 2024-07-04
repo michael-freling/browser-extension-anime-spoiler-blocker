@@ -28,73 +28,82 @@ type Message = UpdateWatchHistoryMessage | GetConfigMessage;
 
 chrome.runtime.onMessage.addListener(
   (message: Message, sender, sendResponse) => {
-    switch (message.type) {
-      case "getConfig":
-        Promise.all([storage.get("config"), storage.get("userHistory")]).then(
-          (result) => {
-            sendResponse({
-              config: result[0],
-              userHistory: result[1],
-            });
-          }
-        );
-        return true;
-
-      case "updateWatchHistory":
-        // no support other than tv shows
-        if (message.mediaType != "tv") {
-          return;
-        }
-
-        Promise.all([storage.get("config"), storage.get("userHistory")]).then(
-          async ([config, userHistory]) => {
-            if (config.services[message.webServiceName] == null) {
-              return;
+    try {
+      switch (message.type) {
+        case "getConfig":
+          Promise.all([storage.get("config"), storage.get("userHistory")]).then(
+            (result) => {
+              sendResponse({
+                config: result[0],
+                userHistory: result[1],
+              });
             }
+          );
+          return true;
 
-            let result;
-            Object.entries(
-              (config as Config).services[message.webServiceName].series
-            ).forEach(([seriesID, thisSeries]) => {
-              if (thisSeries.title == message.series) {
-                result = seriesID;
+        case "updateWatchHistory":
+          // no support other than tv shows
+          if (message.mediaType != "tv") {
+            return;
+          }
+
+          Promise.all([storage.get("config"), storage.get("userHistory")]).then(
+            async (promises) => {
+              const [config, userHistory]: [Config, UserHistory] =
+                promises as any;
+              if (config.services[message.webServiceName] == null) {
                 return;
               }
-            });
 
-            if (result == null) {
-              return;
-            }
-            if (userHistory.series[result] == null) {
-              userHistory.series[result] = {
-                tv: {
-                  season: 0,
-                  episode: 0,
-                },
-              };
-            }
-            if (message.season < userHistory.series[result].tv.season) {
-              return;
-            }
-            if (
-              message.season == userHistory.series[result].tv.season &&
-              message.episode <= userHistory.series[result].tv.episode
-            ) {
-              return;
-            }
+              let result;
+              Object.entries(
+                (config as Config).services[message.webServiceName].series
+              ).forEach(([seriesID, thisSeries]) => {
+                if (
+                  thisSeries.title.toLocaleLowerCase() ==
+                  message.series.toLocaleLowerCase()
+                ) {
+                  result = seriesID;
+                  return;
+                }
+              });
 
-            userHistory.series[result].tv.season = message.season;
-            userHistory.series[result].tv.episode = message.episode;
-            await storage.set("userHistory", userHistory);
-            console.info("Updated a watch history", {
-              series: message.series,
-              season: userHistory.series[result].tv.season,
-              episode: userHistory.series[result].tv.episode,
-            });
-          }
-        );
+              if (result == null) {
+                return;
+              }
+              if (userHistory.series[result] == null) {
+                userHistory.series[result] = {
+                  tv: {
+                    season: 0,
+                    episode: 0,
+                  },
+                };
+              }
+              if (message.season < userHistory.series[result].tv.season) {
+                return;
+              }
+              if (
+                message.season == userHistory.series[result].tv.season &&
+                message.episode <= userHistory.series[result].tv.episode
+              ) {
+                return;
+              }
 
-        return true;
+              userHistory.series[result].tv.season = message.season;
+              userHistory.series[result].tv.episode = message.episode;
+              await storage.set("userHistory", userHistory);
+              console.info("Updated a watch history", {
+                series: message.series,
+                season: userHistory.series[result].tv.season,
+                episode: userHistory.series[result].tv.episode,
+              });
+            }
+          );
+
+          return true;
+      }
+    } catch (error) {
+      console.error("failed to onMessage", error);
     }
   }
 );

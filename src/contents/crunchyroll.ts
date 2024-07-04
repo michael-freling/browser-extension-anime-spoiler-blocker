@@ -1,8 +1,14 @@
+import { PlasmoCSConfig } from "plasmo";
+
 interface ParsedTitle {
   series: string;
   episode: number;
   season: number;
 }
+
+export const config: PlasmoCSConfig = {
+  matches: ["https://www.crunchyroll.com/*"],
+};
 
 export function parseTitle(title: string): ParsedTitle | null {
   const titleSubStrings = title.split(" | ");
