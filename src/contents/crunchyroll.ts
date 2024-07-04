@@ -1,3 +1,4 @@
+import { sendToBackground } from "@plasmohq/messaging";
 import { PlasmoCSConfig } from "plasmo";
 
 interface ParsedTitle {
@@ -83,11 +84,17 @@ async function onLoad() {
   }
   cache.set(titleContent, () => {
     const episode = parseTitle(titleContent);
-    chrome.runtime.sendMessage({
-      ...episode,
-      type: "updateWatchHistory",
-      webServiceName: "crunchyroll",
-      mediaType: "tv",
+    console.log("", {
+      episode,
+    });
+    sendToBackground({
+      name: "updateWatchHistory",
+      body: {
+        ...episode,
+        type: "updateWatchHistory",
+        webServiceName: "crunchyroll",
+        mediaType: "tv",
+      },
     });
   });
 }

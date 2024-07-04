@@ -2,9 +2,10 @@ import * as React from "react";
 import { BlockedContent } from "./content";
 import { StrictMode } from "react";
 import * as ReactDOM from "react-dom/client";
-import { Config, TextSpoilerAnalyzer, Spoiler } from "../blocker";
+import { TextSpoilerAnalyzer, Spoiler } from "../blocker";
 import { getXPathFromElement } from "../dom/xpath";
 import type { PlasmoCSConfig } from "plasmo";
+import { sendToBackground } from "@plasmohq/messaging";
 
 export const config: PlasmoCSConfig = {
   matches: ["https://www.youtube.com/*"],
@@ -72,8 +73,8 @@ class VideoSpoilerFilter {
 // Listen for messages from the main world
 window.addEventListener("load", async (event) => {
   try {
-    const { config, userHistory } = await chrome.runtime.sendMessage({
-      type: "getConfig",
+    const { config, userHistory } = await sendToBackground({
+      name: "getConfig",
     });
     // console.debug({
     //   config,

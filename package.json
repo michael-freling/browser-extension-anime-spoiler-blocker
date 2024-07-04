@@ -10,6 +10,7 @@
     "package": "plasmo package"
   },
   "dependencies": {
+    "@plasmohq/messaging": "^0.6.2",
     "@plasmohq/storage": "^1.11.0",
     "hook": "link:@plasmohq/storage/hook",
     "plasmo": "0.88.0",
