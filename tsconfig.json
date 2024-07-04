@@ -1,20 +1,20 @@
 {
-    "compilerOptions": {
-        "strict": true,
-        "module": "ES2015",
-        "moduleResolution": "Node",
-        "target": "ES2018",
-        "esModuleInterop": true,
-        "sourceMap": true,
-        "rootDir": "src",
-        "outDir": "build/js",
-        "noEmitOnError": true,
-        "typeRoots": [
-            "node_modules/@types"
-        ],
-        "jsx": "react-jsx"
+  "extends": "plasmo/templates/tsconfig.base",
+  "exclude": [
+    "node_modules"
+  ],
+  "include": [
+    ".plasmo/index.d.ts",
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "compilerOptions": {
+    "jsx": "react",
+    "paths": {
+      "~*": [
+        "./src/*"
+      ]
     },
-    "include": [
-      "src"
-    ]
+    "baseUrl": "."
+  }
 }

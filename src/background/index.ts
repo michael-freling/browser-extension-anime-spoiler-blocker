@@ -1,8 +1,10 @@
-import { Config, UserHistory } from "../blocker";
+import type { Config, UserHistory } from "../blocker";
+import { Storage } from "@plasmohq/storage";
 
-const storage = chrome.storage.sync;
+const storage = new Storage();
 
 // https://developer.chrome.com/docs/extensions/reference/api/runtime#event-onInstalled
+// TODO: There is no install hook on Plasmo?
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === "install") {
     onInstall();
@@ -28,7 +30,14 @@ chrome.runtime.onMessage.addListener(
   (message: Message, sender, sendResponse) => {
     switch (message.type) {
       case "getConfig":
-        storage.get(["config", "userHistory"]).then(sendResponse);
+        Promise.all([storage.get("config"), storage.get("userHistory")]).then(
+          (result) => {
+            sendResponse({
+              config: result[0],
+              userHistory: result[1],
+            });
+          }
+        );
         return true;
 
       case "updateWatchHistory":
@@ -37,9 +46,8 @@ chrome.runtime.onMessage.addListener(
           return;
         }
 
-        storage
-          .get(["config", "userHistory"])
-          .then(async ({ config, userHistory }) => {
+        Promise.all([storage.get("config"), storage.get("userHistory")]).then(
+          async ([config, userHistory]) => {
             if (config.services[message.webServiceName] == null) {
               return;
             }
@@ -77,15 +85,14 @@ chrome.runtime.onMessage.addListener(
 
             userHistory.series[result].tv.season = message.season;
             userHistory.series[result].tv.episode = message.episode;
-            await storage.set({
-              userHistory,
-            });
+            await storage.set("userHistory", userHistory);
             console.info("Updated a watch history", {
               series: message.series,
               season: userHistory.series[result].tv.season,
               episode: userHistory.series[result].tv.episode,
             });
-          });
+          }
+        );
 
         return true;
     }
@@ -95,8 +102,8 @@ chrome.runtime.onMessage.addListener(
 async function onInstall() {
   try {
     const configFiles = [
-      "assets/data/default_config.json",
-      "assets/data/user_history_example.json",
+      "assets/configs/default_config.json",
+      "assets/configs/user_history_example.json",
     ];
     const responses = await Promise.all(
       configFiles.map(async (configFile) => {
@@ -111,10 +118,8 @@ async function onInstall() {
     const config: Config = responses[0];
     const userHistory: UserHistory = responses[1];
 
-    storage.set({
-      config,
-      userHistory,
-    });
+    storage.set("config", config);
+    storage.set("userHistory", userHistory);
   } catch (error) {
     console.error("failed to run main", error);
   }
