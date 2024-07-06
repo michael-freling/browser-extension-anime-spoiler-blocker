@@ -47,9 +47,6 @@ async function onLoad() {
   }
   cache.set(titleContent, () => {
     const episode = parseTitle(titleContent);
-    console.log("", {
-      episode,
-    });
     sendToBackground({
       name: "updateWatchHistory",
       body: {

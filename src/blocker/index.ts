@@ -1,37 +1,4 @@
-export interface Config {
-  series: {
-    [seriesID: string]: SeriesConfig;
-  };
-  services: {
-    [serviceName: string]: {
-      series: {
-        [seriesID: string]: {
-          title: string;
-        };
-      };
-    };
-  };
-}
-
-export interface SeriesConfig {
-  title: string;
-  keywords: string[];
-}
-
-enum MediaType {
-  TVShows = "tv",
-}
-
-export interface UserHistory {
-  series: {
-    [seriesID: string]: {
-      [MediaType.TVShows]: {
-        season: number;
-        episode: number;
-      };
-    };
-  };
-}
+import { StorageAnimeConfig, StorageUserHistory } from "./storage";
 
 export interface Spoiler {
   title: string;
@@ -40,16 +7,14 @@ export interface Spoiler {
 }
 
 export class TextSpoilerAnalyzer {
-  config: Config;
-  userHistory: UserHistory;
+  config: StorageAnimeConfig;
+  userHistory: StorageUserHistory;
 
-  constructor(config: Config, userHistory: UserHistory) {
-    Object.keys(config.series).forEach((contentId) => {
-      config.series[contentId].keywords = config.series[contentId].keywords.map(
-        (keyword) => {
-          return keyword.toLowerCase();
-        }
-      );
+  constructor(config: StorageAnimeConfig, userHistory: StorageUserHistory) {
+    config.series.forEach((thisSeries) => {
+      thisSeries.keywords = thisSeries.keywords.map((keyword) => {
+        return keyword.toLowerCase();
+      });
     });
 
     this.config = config;
@@ -111,7 +76,7 @@ export class TextSpoilerAnalyzer {
       season: 0,
       episode: 0,
     };
-    Object.entries(this.config.series).forEach(([seriesId, config]) => {
+    this.config.series.forEach((config) => {
       const episodeFromText = this.extractEpisodeFromText(
         text,
         config.title,
@@ -127,7 +92,15 @@ export class TextSpoilerAnalyzer {
         return;
       }
 
-      const allowedEpisode = this.userHistory.series[seriesId].tv;
+      const seriesFromHistory = this.userHistory.series.find(
+        (series) => series.title.toLowerCase() == config.title.toLowerCase()
+      );
+      if (seriesFromHistory == null) {
+        // The title in the series is supposed to match with a user history
+        return;
+      }
+
+      const allowedEpisode = seriesFromHistory.tv;
       if (episodeFromText.season < allowedEpisode.season) {
         return;
       }

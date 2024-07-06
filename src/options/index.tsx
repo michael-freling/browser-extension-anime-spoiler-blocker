@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useStorage } from "@plasmohq/storage/hook";
-import type { UserHistory, Config } from "~blocker";
+import type { StorageUserHistory, StorageAnimeConfig } from "~blocker/storage";
 
 interface InputJSONFieldProps {
   label: string;
@@ -47,9 +47,10 @@ function InputJSONField({
 }
 
 export default function IndexOptions() {
-  const [initialConfigValue, setConfig] = useStorage<Config>("config");
+  const [initialConfigValue, setConfig] =
+    useStorage<StorageAnimeConfig>("config");
   const [initialUserHistoryValue, setUserHistory] =
-    useStorage<UserHistory>("userHistory");
+    useStorage<StorageUserHistory>("userHistory");
 
   if (initialConfigValue == null || initialUserHistoryValue == null) {
     return <h1>Loading...</h1>;
@@ -63,14 +64,14 @@ export default function IndexOptions() {
         label={"Anime configuration"}
         initialValue={initialConfigValue}
         setValue={(value: Object) => {
-          setConfig(value as Config);
+          setConfig(value as StorageAnimeConfig);
         }}
       />
       <InputJSONField
         label={"Your watch history"}
         initialValue={initialUserHistoryValue}
         setValue={(value: Object) => {
-          setUserHistory(value as UserHistory);
+          setUserHistory(value as StorageUserHistory);
         }}
       />
     </>

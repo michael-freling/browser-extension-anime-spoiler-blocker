@@ -1,22 +1,25 @@
 {
-  "series": {
-    "demon_slayer": {
+  "series": [
+    {
+      "title": "Demon Slayer",
       "tv": {
         "season": 1,
         "episode": 1
       }
     },
-    "jujutsu_kaisen": {
+    {
+      "title": "Jujutsu Kaisen",
       "tv": {
         "season": 1,
         "episode": 1
       }
     },
-    "mushoku_tensei": {
+    {
+      "title": "Mushoku Tensei",
       "tv": {
-        "season": 2,
+        "season": 1,
         "episode": 1
       }
     }
-  }
+  ]
 }

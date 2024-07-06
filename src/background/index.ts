@@ -1,4 +1,4 @@
-import type { Config, UserHistory } from "../blocker";
+import type { StorageAnimeConfig, StorageUserHistory } from "~blocker/storage";
 import { Storage } from "@plasmohq/storage";
 
 const storage = new Storage();
@@ -27,8 +27,8 @@ async function onInstall() {
         return await response.json();
       })
     );
-    const config: Config = responses[0];
-    const userHistory: UserHistory = responses[1];
+    const config: StorageAnimeConfig = responses[0];
+    const userHistory: StorageUserHistory = responses[1];
 
     storage.set("config", config);
     storage.set("userHistory", userHistory);

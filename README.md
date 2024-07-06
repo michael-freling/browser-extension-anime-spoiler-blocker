@@ -3,7 +3,7 @@
 > [!WARNING]
 > This is still under development and it's still experimental phase.
 
-This is a brwwser extension to block spoilers for anime in some services.
+This is a browser extension to block spoilers for anime in some services.
 There are a few features supported to block spoilers
 
 1. Keep the history of the last episode of a season for each anime you watched
@@ -14,6 +14,4 @@ There are a few features supported to block spoilers
 ## Supported services
 
 Currently, spoilers are blocked on YouTube only.
-You can also see which anime is currently supported on this extension in
-
-- [Crunchyroll](./docs/crunchyroll.md)
+Currently, [Crunchyroll](https://www.crunchyroll.com/) is the only supported service to store a watch history on your chrome browser.

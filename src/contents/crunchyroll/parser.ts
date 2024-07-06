@@ -1,5 +1,5 @@
 export interface ParsedTitle {
-  series: string;
+  titles: string[];
   episode: number;
   season: number;
 }
@@ -30,7 +30,7 @@ export function parseTitle(title: string): ParsedTitle | null {
   }
 
   return {
-    series,
+    titles: series.split(": "),
     episode,
     season,
   };

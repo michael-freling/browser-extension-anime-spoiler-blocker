@@ -75,23 +75,23 @@ describe("TextParser", () => {
       };
       const textParser = new TextSpoilerAnalyzer(
         {
-          series: {
-            test: {
+          series: [
+            {
               keywords,
-              title: "",
+              title: "test",
             },
-          },
-          services: {},
+          ],
         },
         {
-          series: {
-            test: {
+          series: [
+            {
+              title: "test",
               tv: {
                 season: 0,
                 episode: 0,
               },
             },
-          },
+          ],
         }
       );
       const actual = textParser.extractEpisodeFromText(text, "Test", keywords);
@@ -99,36 +99,37 @@ describe("TextParser", () => {
     });
   });
 
-  describe("extractSpoilerEpisode", () => {
+  describe("extractSpoiler", () => {
     const defaultTestCase = {
       config: {
-        series: {
-          test1: {
+        series: [
+          {
             title: "Test",
             keywords: ["test1", "keyword1"],
           },
-          test2: {
+          {
             title: "Test2",
             keywords: ["test2"],
           },
-        },
-        services: {},
+        ],
       },
       userHistory: {
-        series: {
-          test1: {
+        series: [
+          {
+            title: "Test",
             tv: {
               season: 1,
               episode: 2,
             },
           },
-          test2: {
+          {
+            title: "Test2",
             tv: {
               season: 2,
               episode: 1,
             },
           },
-        },
+        ],
       },
       expected: {
         title: "Test",

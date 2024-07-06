@@ -1,6 +1,7 @@
 import "react";
 import React, { useEffect, useState } from "react";
-import { TextSpoilerAnalyzer, Spoiler, UserHistory, Config } from "../blocker";
+import { TextSpoilerAnalyzer, Spoiler } from "../blocker";
+import { StorageUserHistory, StorageAnimeConfig } from "~blocker/storage";
 import type {
   PlasmoCSConfig,
   PlasmoCSUIProps,
@@ -68,8 +69,8 @@ class VideoSpoilerFilter {
   }
 }
 
-let blockerConfig: Config;
-let userHistory: UserHistory;
+let blockerConfig: StorageAnimeConfig;
+let userHistory: StorageUserHistory;
 
 window.addEventListener("load", async (event) => {
   const result = await sendToBackground({
