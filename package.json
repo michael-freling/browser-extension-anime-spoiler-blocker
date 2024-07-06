@@ -1,9 +1,8 @@
 {
-  "name": "defeat-cute-otter",
-  "displayName": "Defeat cute otter",
-  "version": "0.0.1",
-  "description": "A basic Plasmo extension.",
-  "author": "Plasmo Corp. <foss@plasmo.com>",
+  "name": "@michael-freling/browser-extension-anime-spoiler-blocker",
+  "displayName": "Anime Spoiler Blocker",
+  "version": "0.1.0",
+  "description": "The browser extension for blocking spoilers of anime.",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
@@ -47,9 +46,6 @@
     ],
     "host_permissions": [
       "https://*/*"
-    ],
-    "permissions": [
-      "tabs"
     ]
   }
 }
