@@ -1,9 +1,9 @@
-# Chrome Extension Anime Spoiler Blocker
+# Browser Extension Anime Spoiler Blocker
 
 > [!WARNING]
 > This is still under development and it's still experimental phase.
 
-This is a Chrome extension to block spoilers for anime in some services.
+This is a brwwser extension to block spoilers for anime in some services.
 There are a few features supported to block spoilers
 
 1. Keep the history of the last episode of a season for each anime you watched

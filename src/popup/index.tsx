@@ -1,7 +1,6 @@
-import { StrictMode } from "react";
-import ReactDOM from "react-dom/client";
+import * as React from "react";
 
-function Popup() {
+export default function IndexPopup() {
   return (
     <div
       style={{
@@ -33,8 +32,8 @@ function Popup() {
       <ul>
         <li
           onClick={() => {
-            const extensionID = process.env.EXTENSION_ID;
-            const url = `extension://${extensionID}/assets/options.html`;
+            const extensionID = process.env.PLASMO_PUBLIC_EXTENSION_ID;
+            const url = `extension://${extensionID}/options.html`;
             chrome.tabs.create({ url });
           }}
         >
@@ -44,10 +43,3 @@ function Popup() {
     </div>
   );
 }
-
-const root = document.querySelector("#main");
-ReactDOM.createRoot(root!).render(
-  <StrictMode>
-    <Popup />
-  </StrictMode>
-);

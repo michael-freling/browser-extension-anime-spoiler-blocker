@@ -10,25 +10,44 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    environment: production
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          version: 8
+          run_install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version-file: ".node-version"
+          cache: "pnpm"
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
+
+      - name: "Create .env file"
+        run: |
+          touch .env
+          echo "# GitHub actions secrets: https://github.com/michael-freling/chrome-extension-anime-spoiler-blocker/settings/environments/3359267164/edit" >> .env
+          echo "PLASMO_PUBLIC_EXTENSION_ID=$PLASMO_PUBLIC_EXTENSION_ID" >> .env
+          echo "CRX_PUBLIC_KEY=$CRX_PUBLIC_KEY" >> .env
+        env:
+          PLASMO_PUBLIC_EXTENSION_ID: ${{ vars.PLASMO_PUBLIC_EXTENSION_ID }}
+          CRX_PUBLIC_KEY: ${{ secrets.CRX_PUBLIC_KEY }}
 
       - name: Build
-        run: npm run build
+        run: pnpm build
 
       # Create a GitHub release from the dist and a tag
       # https://github.com/ncipollo/release-action
       # https://earthly.dev/blog/github-action-artifacts/
-      - run: zip -r extension.zip dist/
+      - run: zip -r extension.zip build/
       - uses: ncipollo/release-action@v1
         with:
           artifacts: "extension.zip"
           # Following fields are for debugging
           # allowUpdates: true
-          # tag: "v0.0.1"
+          # tag: "v0.1.1"
