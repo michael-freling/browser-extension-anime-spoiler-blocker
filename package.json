@@ -1,11 +1,11 @@
 {
   "name": "@michael-freling/browser-extension-anime-spoiler-blocker",
   "displayName": "Anime Spoiler Blocker",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "The browser extension for blocking spoilers of anime.",
   "scripts": {
     "dev": "plasmo dev",
-    "build": "plasmo build",
+    "build": "plasmo build --target=chrome-mv3 && plasmo build --target=edge-mv3",
     "package": "plasmo package",
     "test": "jest",
     "test:watch": "jest --watch"
