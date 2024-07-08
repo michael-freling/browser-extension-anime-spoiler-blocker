@@ -1,4 +1,4 @@
-name: Releases
+name: Publish new releases
 
 on:
   push:
@@ -6,11 +6,12 @@ on:
       - "*"
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     environment: production
+    strategy:
+      matrix:
+        browser: [chrome]
     steps:
       - uses: actions/checkout@v4
 
@@ -33,21 +34,49 @@ jobs:
           touch .env
           echo "# GitHub actions secrets: https://github.com/michael-freling/chrome-extension-anime-spoiler-blocker/settings/environments/3359267164/edit" >> .env
           echo "PLASMO_PUBLIC_EXTENSION_ID=$PLASMO_PUBLIC_EXTENSION_ID" >> .env
-          echo "CRX_PUBLIC_KEY=$CRX_PUBLIC_KEY" >> .env
+          # echo "CRX_PUBLIC_KEY=$CRX_PUBLIC_KEY" >> .env
         env:
           PLASMO_PUBLIC_EXTENSION_ID: ${{ vars.PLASMO_PUBLIC_EXTENSION_ID }}
-          CRX_PUBLIC_KEY: ${{ secrets.CRX_PUBLIC_KEY }}
+          # CRX_PUBLIC_KEY: ${{ secrets.CRX_PUBLIC_KEY }}
 
       - name: Build
-        run: pnpm build
+        run: pnpm build --target=${{ matrix.browser }}-mv3 --zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.browser }}
+          path: build/${{ matrix.browser }}-mv3-prod.zip
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: chrome
+          path: build
+      - run: ls -lRa build
 
       # Create a GitHub release from the dist and a tag
       # https://github.com/ncipollo/release-action
       # https://earthly.dev/blog/github-action-artifacts/
-      - run: zip -r extension.zip build/
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "extension.zip"
+          # artifacts: "build/chrome-mv3-prod.zip,build/edge-mv3-prod.zip"
+          artifacts: "build/chrome-mv3-prod.zip"
           # Following fields are for debugging
           # allowUpdates: true
           # tag: "v0.1.1"
+
+      # Submit a release into a web store
+      # https://docs.plasmo.com/framework/workflows/submit
+      # - name: Browser Platform Publish
+      #   uses: PlasmoHQ/bpp@v3
+      #   with:
+      #     keys: ${{ secrets.BPP_KEYS }}
+      #     chrome-file: "build/chrome-mv3-prod.zip"
+      #     # version-file: "src/manifest.json"
+      #     verbose: true
