@@ -8,10 +8,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: production
     strategy:
       matrix:
         browser: [chrome, edge]
+        env: [staging, production]
+    environment: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,13 +30,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: "Create .env.dev file"
+        if: ${{ matrix.env == 'staging' }}
+        run: |
+          rm .env.*
+          touch .env.staging
+          echo "# GitHub actions secrets: https://github.com/michael-freling/chrome-extension-anime-spoiler-blocker/settings/environments/3359267164/edit" >> .env.staging
+          echo "PLASMO_PUBLIC_EXTENSION_ID=$PLASMO_PUBLIC_EXTENSION_ID" >> .env.staging
+          echo "CRX_PUBLIC_KEY=$CRX_PUBLIC_KEY" >> .env.staging
+        env:
+          PLASMO_PUBLIC_EXTENSION_ID: ${{ vars.PLASMO_PUBLIC_EXTENSION_ID }}
+          CRX_PUBLIC_KEY: ${{ secrets.CRX_PUBLIC_KEY }}
+
       - name: Build
-        run: pnpm plasmo build --target=${{ matrix.browser }}-mv3 --zip
+        run: pnpm plasmo build --tag=${{ matrix.env }} --target=${{ matrix.browser }}-mv3 --zip
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.browser }}
-          path: build/${{ matrix.browser }}-mv3-prod.zip
+          name: extension-${{ matrix.browser }}-${{ matrix.env }}
+          path: build/${{ matrix.browser }}-mv3-${{ matrix.env }}.zip
 
   publish:
     runs-on: ubuntu-latest
@@ -46,12 +59,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: chrome
+          pattern: extension-*
           path: build
-      - uses: actions/download-artifact@v4
-        with:
-          name: edge
-          path: build
+          merge-multiple: true
 
       - run: ls -lRa build
 
@@ -60,7 +70,7 @@ jobs:
       # https://earthly.dev/blog/github-action-artifacts/
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/chrome-mv3-prod.zip,build/edge-mv3-prod.zip"
+          artifacts: "build/*.zip"
           # Following fields are for debugging
           # allowUpdates: true
           # tag: "v0.1.1"
@@ -71,6 +81,6 @@ jobs:
       #   uses: PlasmoHQ/bpp@v3
       #   with:
       #     keys: ${{ secrets.BPP_KEYS }}
-      #     chrome-file: "build/chrome-mv3-prod.zip"
+      #     chrome-file: "build/chrome-mv3-production.zip"
       #     # version-file: "src/manifest.json"
       #     verbose: true

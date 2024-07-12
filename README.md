@@ -15,3 +15,10 @@ There are a few features supported to block spoilers
 
 Currently, spoilers are blocked on YouTube only.
 Currently, [Crunchyroll](https://www.crunchyroll.com/) is the only supported service to store a watch history on your chrome browser.
+
+
+## Development
+
+There are 2 versions of published extensions
+- production: Extensions to publish from web stores of each browser like Chrome. This release cannot be installed from the GitHub release page.
+- staging: Extensions that can be installed from the GitHub release page and run them.
