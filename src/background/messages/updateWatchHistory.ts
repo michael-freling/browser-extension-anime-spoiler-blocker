@@ -29,7 +29,7 @@ const handler: PlasmoMessaging.MessageHandler<
       const [config, userHistory]: [StorageAnimeConfig, StorageUserHistory] =
         promises as any;
       const userHistoryManager = new UserHistoryManager(config, userHistory);
-      const updatedConfigs = userHistoryManager.updateWatchHistory(message);
+      const updatedConfigs = await userHistoryManager.updateWatchHistory(message);
       if (updatedConfigs == null || updatedConfigs.userHistory == null) {
         return;
       }
