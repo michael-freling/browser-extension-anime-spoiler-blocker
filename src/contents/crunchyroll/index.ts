@@ -1,6 +1,7 @@
 import { sendToBackground } from "@plasmohq/messaging";
 import { PlasmoCSConfig } from "plasmo";
 import { parseTitle } from "./parser";
+import { MediaType } from "~blocker/storage";
 
 export const config: PlasmoCSConfig = {
   matches: ["https://www.crunchyroll.com/*"],
@@ -53,7 +54,7 @@ async function onLoad() {
         ...episode,
         type: "updateWatchHistory",
         webServiceName: "crunchyroll",
-        mediaType: "tv",
+        mediaType: MediaType.TVShows,
       },
     });
   });
