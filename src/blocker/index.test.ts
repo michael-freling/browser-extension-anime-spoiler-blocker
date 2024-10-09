@@ -1,4 +1,5 @@
 import { TextSpoilerAnalyzer } from ".";
+import { newStorageAnimeConfig } from "./storage.test";
 
 describe("TextParser", () => {
   describe("extractEpisodeFromText", () => {
@@ -74,14 +75,14 @@ describe("TextParser", () => {
         ...arg,
       };
       const textParser = new TextSpoilerAnalyzer(
-        {
+        newStorageAnimeConfig({
           series: [
             {
               keywords,
               title: "test",
             },
           ],
-        },
+        }),
         {
           series: [
             {
@@ -101,7 +102,7 @@ describe("TextParser", () => {
 
   describe("extractSpoiler", () => {
     const defaultTestCase = {
-      config: {
+      config: newStorageAnimeConfig({
         series: [
           {
             title: "Test",
@@ -112,7 +113,7 @@ describe("TextParser", () => {
             keywords: ["test2"],
           },
         ],
-      },
+      }),
       userHistory: {
         series: [
           {

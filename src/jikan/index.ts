@@ -29,6 +29,29 @@ export interface SearchAnimeRequest {
   type: AnimeType.TV | AnimeType.Movie;
 }
 
+const snakeToCamel = (str) =>
+  str
+    .toLowerCase()
+    .replace(/([-_][a-z])/g, (group) =>
+      group.toUpperCase().replace("-", "").replace("_", "")
+    );
+
+export function keysToCamel(object) {
+  if (Array.isArray(object)) {
+    return object.map((element) => {
+      return keysToCamel(element);
+    });
+  }
+  if (typeof object === "object" && object !== null) {
+    const result = {};
+    Object.keys(object).forEach((key) => {
+      result[snakeToCamel(key)] = keysToCamel(object[key]);
+    });
+    return result;
+  }
+  return object;
+}
+
 export class JikanAPIClient {
   baseURL = "https://api.jikan.moe/v4";
 
@@ -50,6 +73,8 @@ export class JikanAPIClient {
     }).toString();
 
     const response = await fetch(url);
-    return response.json();
+    const json = keysToCamel(await response.json());
+    // console.log({ json });
+    return json;
   }
 }
