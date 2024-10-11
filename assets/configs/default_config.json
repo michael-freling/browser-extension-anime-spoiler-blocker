@@ -32,5 +32,11 @@
       "title": "Mushoku Tensei",
       "keywords": ["Mushoku Tensei", "Jobless Reincarnation"]
     }
+  ],
+  "hidive": [
+    {
+      "title": "Oshi No Ko",
+      "seasonId": "24567"
+    }
   ]
 }

@@ -2,6 +2,13 @@ import { AnimeType, JikanAPIClient } from "../jikan";
 
 export interface StorageAnimeConfig {
   series: StorageSeriesConfig[];
+  hidive: StorageHiDiveConfig[];
+}
+
+export interface StorageHiDiveConfig {
+  seasonId: string;
+  season: number;
+  title: string;
 }
 
 export interface StorageSeriesConfig {
@@ -38,21 +45,38 @@ export interface StorageUserHistory {
   }[];
 }
 
+export type UpdateWatchHistoryArg =
+  | {
+      webServiceName: "Crunchyroll";
+      mediaType: string;
+      titles: string[];
+      season: number;
+      episode: number;
+    }
+  | {
+      webServiceName: "HIDIVE";
+      mediaType: string;
+      title: string;
+      season: number;
+      seasonId: string;
+    }
+  | {
+      webServiceName: "HIDIVE";
+      mediaType: string;
+      episode: number;
+      seasonId: string;
+    };
+
 export class UserHistoryManager {
-  userConfig: {
+  indexes: {
     series: {
-      [seriesTitle: string]: {
-        keywords: string[];
-        title: string;
-        [MediaType.TVShows]: {
-          season: number;
-          episode: number;
-        };
-        meta: {
-          tvs: StorageSeriesAnimeConfig[];
-          movies: StorageSeriesMoviesConfig[];
-        };
-      };
+      [seriesTitle: string]: number;
+    };
+    hidive: {
+      [hidiveSeasonId: string]: number;
+    };
+    userHistory: {
+      [seriesTitle: string]: number;
     };
   };
   storageAnimeConfig: StorageAnimeConfig;
@@ -63,26 +87,21 @@ export class UserHistoryManager {
     userHistory: StorageUserHistory,
     private jikanAPIClient: JikanAPIClient = new JikanAPIClient()
   ) {
-    const userConfig = { series: {} };
-    animeConfig.series.forEach((series) => {
-      userHistory.series.forEach((userSeries) => {
-        if (series.title.toLowerCase() == userSeries.title.toLowerCase()) {
-          userConfig.series[series.title.toLowerCase()] = {
-            title: series.title,
-            keywords: series.keywords,
-            [MediaType.TVShows]: {
-              season: userSeries.tv.season,
-              episode: userSeries.tv.episode,
-            },
-            meta: {
-              tvs: series.tvs,
-              movies: series.movies,
-            },
-          };
-        }
-      });
+    const indexes = { series: {}, userHistory: {}, hidive: {} };
+    animeConfig.series.forEach((series, index) => {
+      indexes.series[series.title.toLowerCase()] = index;
     });
-    this.userConfig = userConfig;
+    userHistory.series.forEach((series, index) => {
+      indexes.userHistory[series.title.toLowerCase()] = index;
+    });
+    if (animeConfig.hidive == null) {
+      animeConfig.hidive = [];
+    }
+    animeConfig.hidive.forEach((season, index) => {
+      indexes.hidive[season.seasonId] = index;
+    });
+
+    this.indexes = indexes;
     this.storageAnimeConfig = animeConfig;
     this.storageUserHistory = userHistory;
   }
@@ -122,57 +141,96 @@ export class UserHistoryManager {
     return result;
   }
 
-  async updateWatchHistory(request: {
-    mediaType: string;
-    titles: string[];
-    season: number;
-    episode: number;
-  }): Promise<{
+  async createNewAnimeConfig(args: { title: string }) {
+    const { title } = args;
+    const [tvs, movies] = await Promise.all([
+      this.searchAnime(title, AnimeType.TV),
+      this.searchAnime(title, AnimeType.Movie),
+    ]);
+
+    const allKeywords = [title]
+      .concat(tvs.map((tv) => tv.keywords).flat())
+      .concat(movies.map((movie) => movie.keywords).flat())
+      .sort();
+    const keywords = [];
+    for (let keyword of allKeywords) {
+      if (keywords.includes(keyword)) {
+        continue;
+      }
+      keywords.push(keyword.trim());
+    }
+
+    return {
+      title,
+      keywords,
+      tvs,
+      movies,
+    };
+  }
+
+  async updateWatchHistory(request: UpdateWatchHistoryArg): Promise<{
     config?: StorageAnimeConfig;
     userHistory?: StorageUserHistory;
   }> {
-    const { mediaType, titles, season, episode } = request;
+    let season: number;
+    let title: string;
+
+    if (request.webServiceName === "HIDIVE") {
+      if ("season" in request) {
+        season = request.season;
+        const { seasonId, title } = request;
+        if (this.indexes.hidive[seasonId] != null) {
+          // this anime was already added
+          return;
+        }
+
+        this.storageAnimeConfig.hidive.push({
+          seasonId,
+          title,
+          season,
+        });
+        const series = this.indexes.series[title.toLocaleLowerCase()];
+        if (series == null) {
+          this.storageAnimeConfig.series.push(
+            await this.createNewAnimeConfig({ title })
+          );
+        }
+        return {
+          config: this.storageAnimeConfig,
+        };
+      }
+
+      // todo: when an episode was found
+      const index = this.indexes.hidive[request.seasonId];
+      if (index == null) {
+        return;
+      }
+
+      season = this.storageAnimeConfig.hidive[index].season;
+      title = this.storageAnimeConfig.hidive[index].title;
+    } else if (request.webServiceName === "Crunchyroll") {
+      season = request.season;
+      const titles = request.titles;
+      title = titles[0];
+    } else {
+      // @ts-ignore webServiceName becomes never type
+      // but this value comes from an input and can be any string
+      throw new Error("Unsupported web service: " + request.webServiceName);
+    }
+
+    const { mediaType, episode } = request;
     if (mediaType !== MediaType.TVShows) {
       return;
     }
 
-    const configs = titles
-      .map((title) => {
-        return this.userConfig.series[title.toLowerCase()];
-      })
-      .filter((config) => config != null);
-
-    const mainTitle = titles[0];
-    const createNewAnimeConfig = async () => {
-      const [tvs, movies] = await Promise.all([
-        this.searchAnime(mainTitle, AnimeType.TV),
-        this.searchAnime(mainTitle, AnimeType.Movie),
-      ]);
-
-      const allKeywords = titles
-        .concat(tvs.map((tv) => tv.keywords).flat())
-        .concat(movies.map((movie) => movie.keywords).flat())
-        .sort();
-      const keywords = [];
-      for (let keyword of allKeywords) {
-        if (keywords.includes(keyword)) {
-          continue;
-        }
-        keywords.push(keyword.trim());
-      }
-
-      return {
-        title: mainTitle,
-        keywords,
-        tvs,
-        movies,
-      };
-    };
-    if (configs.length == 0) {
-      this.storageAnimeConfig.series.push(await createNewAnimeConfig());
+    const seriesIndex = this.indexes.series[title.toLocaleLowerCase()];
+    if (seriesIndex == null) {
+      this.storageAnimeConfig.series.push(
+        await this.createNewAnimeConfig({ title })
+      );
       // new series to watch
       this.storageUserHistory.series.push({
-        title: mainTitle,
+        title,
         tv: {
           season,
           episode,
@@ -184,36 +242,43 @@ export class UserHistoryManager {
         userHistory: this.storageUserHistory,
       };
     }
+    const userHistoryIndex = this.indexes.userHistory[title.toLowerCase()];
+    if (userHistoryIndex == null) {
+      this.storageUserHistory.series.push({
+        title,
+        tv: {
+          season,
+          episode,
+        },
+      });
+      return {
+        userHistory: this.storageUserHistory,
+      };
+    }
 
-    const config = configs[0];
-    if (season < config.tv.season) {
+    const userHistory = this.storageUserHistory.series[userHistoryIndex];
+    if (season < userHistory.tv.season) {
       return;
     }
-    if (season == config.tv.season && episode <= config.tv.episode) {
+    if (season == userHistory.tv.season && episode <= userHistory.tv.episode) {
       return;
     }
 
-    this.storageUserHistory.series.forEach((thisSeries, index) => {
-      if (thisSeries.title.toLowerCase() == config.title.toLowerCase()) {
-        this.storageUserHistory.series[index].tv.season = season;
-        this.storageUserHistory.series[index].tv.episode = episode;
-      }
-    });
+    this.storageUserHistory.series[userHistoryIndex].tv.season = season;
+    this.storageUserHistory.series[userHistoryIndex].tv.episode = episode;
 
     console.info("Updated a watch history", {
-      series: titles,
+      series: title,
       season,
       episode,
     });
 
     // If the main config doesn't load a MAL yet.
     // This is for a migration from an old data to a new data, and temporary solution
-    if (config.meta.tvs == null && config.meta.movies == null) {
-      const newCnnfig = await createNewAnimeConfig();
-      const index = this.storageAnimeConfig.series.findIndex((series) => {
-        return series.title.toLowerCase() == config.title.toLowerCase();
-      });
-      this.storageAnimeConfig.series[index] = newCnnfig;
+    const config = this.storageAnimeConfig.series[seriesIndex];
+    if (config != null && config.tvs == null && config.movies == null) {
+      const newConfig = await this.createNewAnimeConfig({ title });
+      this.storageAnimeConfig.series[seriesIndex] = newConfig;
       return {
         config: this.storageAnimeConfig,
         userHistory: this.storageUserHistory,
