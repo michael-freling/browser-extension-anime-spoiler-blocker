@@ -1,4 +1,8 @@
-import type { StorageAnimeConfig, StorageUserHistory } from "~blocker/storage";
+import type {
+  StorageAnimeConfig,
+  StorageHidiveConfig,
+  StorageUserHistory,
+} from "~blocker/storage";
 import { Storage } from "@plasmohq/storage";
 
 const storage = new Storage();
@@ -15,6 +19,7 @@ async function onInstall() {
   try {
     const configFiles = [
       "assets/configs/default_config.json",
+      "assets/configs/hidive.json",
       "assets/configs/user_history_example.json",
     ];
     const responses = await Promise.all(
@@ -28,9 +33,11 @@ async function onInstall() {
       })
     );
     const config: StorageAnimeConfig = responses[0];
-    const userHistory: StorageUserHistory = responses[1];
+    const hidiveConfig: StorageHidiveConfig = responses[1];
+    const userHistory: StorageUserHistory = responses[2];
 
     storage.set("config", config);
+    storage.set("hidive", hidiveConfig);
     storage.set("userHistory", userHistory);
   } catch (error) {
     console.error("failed to run main", error);

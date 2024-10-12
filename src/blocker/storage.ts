@@ -2,13 +2,14 @@ import { AnimeType, JikanAPIClient } from "../jikan";
 
 export interface StorageAnimeConfig {
   series: StorageSeriesConfig[];
-  hidive: StorageHiDiveConfig[];
 }
 
-export interface StorageHiDiveConfig {
-  seasonId: string;
-  season: number;
-  title: string;
+export interface StorageHidiveConfig {
+  series: {
+    seasonId: string;
+    season: number;
+    title: string;
+  }[];
 }
 
 export interface StorageSeriesConfig {
@@ -80,10 +81,12 @@ export class UserHistoryManager {
     };
   };
   storageAnimeConfig: StorageAnimeConfig;
+  hidiveConfig: StorageHidiveConfig;
   storageUserHistory: StorageUserHistory;
 
   constructor(
     animeConfig: StorageAnimeConfig,
+    hidiveConfig: StorageHidiveConfig,
     userHistory: StorageUserHistory,
     private jikanAPIClient: JikanAPIClient = new JikanAPIClient()
   ) {
@@ -94,15 +97,16 @@ export class UserHistoryManager {
     userHistory.series.forEach((series, index) => {
       indexes.userHistory[series.title.toLowerCase()] = index;
     });
-    if (animeConfig.hidive == null) {
-      animeConfig.hidive = [];
+    if (hidiveConfig.series == null) {
+      hidiveConfig.series = [];
     }
-    animeConfig.hidive.forEach((season, index) => {
+    hidiveConfig.series.forEach((season, index) => {
       indexes.hidive[season.seasonId] = index;
     });
 
     this.indexes = indexes;
     this.storageAnimeConfig = animeConfig;
+    this.hidiveConfig = hidiveConfig;
     this.storageUserHistory = userHistory;
   }
 
@@ -170,6 +174,7 @@ export class UserHistoryManager {
 
   async updateWatchHistory(request: UpdateWatchHistoryArg): Promise<{
     config?: StorageAnimeConfig;
+    hidiveConfig?: StorageHidiveConfig;
     userHistory?: StorageUserHistory;
   }> {
     let season: number;
@@ -184,7 +189,7 @@ export class UserHistoryManager {
           return;
         }
 
-        this.storageAnimeConfig.hidive.push({
+        this.hidiveConfig.series.push({
           seasonId,
           title,
           season,
@@ -197,6 +202,7 @@ export class UserHistoryManager {
         }
         return {
           config: this.storageAnimeConfig,
+          hidiveConfig: this.hidiveConfig,
         };
       }
 
@@ -206,8 +212,8 @@ export class UserHistoryManager {
         return;
       }
 
-      season = this.storageAnimeConfig.hidive[index].season;
-      title = this.storageAnimeConfig.hidive[index].title;
+      season = this.hidiveConfig.series[index].season;
+      title = this.hidiveConfig.series[index].title;
     } else if (request.webServiceName === "Crunchyroll") {
       season = request.season;
       const titles = request.titles;

@@ -1,7 +1,9 @@
+import { config } from "process";
 import { AnimeType, JikanAPIClient, SearchAnimeResponse } from "../jikan";
 import {
   MediaType,
   StorageAnimeConfig,
+  StorageHidiveConfig,
   StorageUserHistory,
   UpdateWatchHistoryArg,
   UserHistoryManager,
@@ -14,7 +16,18 @@ export function newStorageAnimeConfig(
     1,
     {
       series: [],
-      hidive: [
+    },
+    args
+  );
+}
+
+function newHidiveConfig(
+  args: Partial<StorageHidiveConfig>
+): StorageHidiveConfig {
+  return mergeObjects(
+    1,
+    {
+      series: [
         {
           seasonId: "11",
           season: 1,
@@ -94,6 +107,7 @@ describe("UserHistoryManager", () => {
       },
     ],
   });
+  const defaultHidiveConfig = newHidiveConfig({});
 
   const createMyHeroAcademia = ({
     season,
@@ -185,6 +199,7 @@ describe("UserHistoryManager", () => {
   const runTest = async (args: {
     message: UpdateWatchHistoryArg;
     config: StorageAnimeConfig;
+    hidiveConfig?: StorageHidiveConfig;
     mockJikanAPIClientResponses?: {
       [type: string]: SearchAnimeResponse;
     };
@@ -193,7 +208,17 @@ describe("UserHistoryManager", () => {
       userHistory: StorageUserHistory;
     };
   }) => {
-    const { message, config, mockJikanAPIClientResponses, expected } = args;
+    const {
+      message,
+      config,
+
+      mockJikanAPIClientResponses,
+      expected,
+    } = args;
+    let { hidiveConfig } = args;
+    if (hidiveConfig == null) {
+      hidiveConfig = { series: [] };
+    }
 
     const mockJikanAPIClient: jest.Mocked<JikanAPIClient> = {
       baseURL: "mock url",
@@ -204,6 +229,7 @@ describe("UserHistoryManager", () => {
 
     const manager = new UserHistoryManager(
       structuredClone(config),
+      structuredClone(hidiveConfig),
       structuredClone(userHistory),
       mockJikanAPIClient
     );
@@ -410,14 +436,16 @@ describe("UserHistoryManager", () => {
                   movies: [],
                 },
               ],
-              hidive: [
+            }),
+            hidiveConfig: {
+              series: [
                 {
                   title: "Demon Slayer",
                   seasonId: "20",
                   season: 1,
                 },
               ],
-            }),
+            },
           },
         },
         {
@@ -502,14 +530,16 @@ describe("UserHistoryManager", () => {
                   ],
                 },
               ],
-              hidive: [
+            }),
+            hidiveConfig: {
+              series: [
                 {
                   title: "Demon Slayer",
                   seasonId: "20",
                   season: 1,
                 },
               ],
-            }),
+            },
           },
         },
         {
@@ -520,11 +550,14 @@ describe("UserHistoryManager", () => {
             season: 2,
             seasonId: "12",
           },
+          hidiveConfig: defaultHidiveConfig,
           expected: {
             config: {
               series: defaultConfig.series,
-              hidive: [
-                ...defaultConfig.hidive,
+            },
+            hidiveConfig: {
+              series: [
+                ...defaultHidiveConfig.series,
                 {
                   title: "My Hero Academia",
                   seasonId: "12",
@@ -542,6 +575,7 @@ describe("UserHistoryManager", () => {
             season: 1,
             seasonId: "11",
           },
+          hidiveConfig: defaultHidiveConfig,
           config: {
             series: defaultConfig.series,
             // hidive:
@@ -571,6 +605,7 @@ describe("UserHistoryManager", () => {
             seasonId: "11",
             episode: 2,
           },
+          hidiveConfig: defaultHidiveConfig,
           expected: {
             userHistory: {
               series: [
