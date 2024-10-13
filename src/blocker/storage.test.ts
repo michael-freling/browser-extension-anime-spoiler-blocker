@@ -262,6 +262,7 @@ describe("UserHistoryManager", () => {
         }),
         mockJikanAPIClientResponses: defaultMockJikanAPIClientResponses,
         expected: {
+          series: defaultConfig.series[0],
           config: defaultConfig,
           userHistory: {
             series: [
@@ -344,6 +345,33 @@ describe("UserHistoryManager", () => {
           },
         },
         expected: {
+          series: {
+            title: "Demon Slayer",
+            keywords: [
+              "Demon Slayer",
+              "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
+              "劇場版 鬼滅の刃 無限列車編",
+              "鬼滅の刃",
+            ],
+            tvs: [
+              {
+                title: "Demon Slayer",
+                keywords: ["Demon Slayer", "鬼滅の刃"],
+                malId: 3,
+              },
+            ],
+            movies: [
+              {
+                title:
+                  "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
+                keywords: [
+                  "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
+                  "劇場版 鬼滅の刃 無限列車編",
+                ],
+                malId: 4,
+              },
+            ],
+          },
           config: newStorageAnimeConfig({
             series: [
               ...defaultConfig.series,
@@ -426,6 +454,12 @@ describe("UserHistoryManager", () => {
             seasonId: "20",
           },
           expected: {
+            series: {
+              title: "Demon Slayer",
+              keywords: ["Demon Slayer"],
+              tvs: [],
+              movies: [],
+            },
             config: newStorageAnimeConfig({
               series: [
                 ...defaultConfig.series,
@@ -499,6 +533,33 @@ describe("UserHistoryManager", () => {
             },
           },
           expected: {
+            series: {
+              title: "Demon Slayer",
+              keywords: [
+                "Demon Slayer",
+                "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
+                "劇場版 鬼滅の刃 無限列車編",
+                "鬼滅の刃",
+              ],
+              tvs: [
+                {
+                  title: "Demon Slayer",
+                  keywords: ["Demon Slayer", "鬼滅の刃"],
+                  malId: 3,
+                },
+              ],
+              movies: [
+                {
+                  title:
+                    "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
+                  keywords: [
+                    "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
+                    "劇場版 鬼滅の刃 無限列車編",
+                  ],
+                  malId: 4,
+                },
+              ],
+            },
             config: newStorageAnimeConfig({
               series: [
                 ...defaultConfig.series,

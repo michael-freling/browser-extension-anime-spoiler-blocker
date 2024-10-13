@@ -1,10 +1,11 @@
 import * as React from "react";
 import { useStorage } from "@plasmohq/storage/hook";
-import type { StorageUserHistory, StorageAnimeConfig } from "~blocker/storage";
+import { type StorageUserHistory, type StorageAnimeConfig, type StorageSeriesConfig } from "~blocker/storage";
 
 interface InputJSONFieldProps {
   label: string;
   initialValue: Object;
+  disabled?: boolean;
   setValue: (object: Object) => void;
 }
 
@@ -13,6 +14,7 @@ type InputJSONFieldStatus = "no" | "editing" | "saved";
 function InputJSONField({
   label,
   initialValue,
+  disabled,
   setValue: setObject,
 }: InputJSONFieldProps) {
   const [status, setStatus] = React.useState<InputJSONFieldStatus>("no");
@@ -27,6 +29,7 @@ function InputJSONField({
         {status == "saved" ? "Saved" : status == "editing" ? "Editing..." : ""}
       </h2>
       <textarea
+        disabled={disabled ?? false}
         rows={20}
         cols={20}
         value={value}
@@ -44,6 +47,24 @@ function InputJSONField({
       />
     </div>
   );
+}
+
+function SeriesConfig(props: { title: string }) {
+    const { title } = props;
+    const [initialSeriesConfigValue, setSeriesConfigValue] = useStorage<StorageSeriesConfig>(`series.${title}`);
+    if (initialSeriesConfigValue == null) {
+        return <h1>Loading {title}...</h1>;
+    }
+    return (
+        <InputJSONField
+            disabled={true}
+            label={`${title} configuration`}
+            initialValue={initialSeriesConfigValue}
+            setValue={(value: Object) => {
+                setSeriesConfigValue(value as StorageSeriesConfig);
+            }}
+        />
+    );
 }
 
 export default function IndexOptions() {
@@ -74,6 +95,8 @@ export default function IndexOptions() {
           setUserHistory(value as StorageUserHistory);
         }}
       />
+
+      {initialUserHistoryValue.series.map((series) => <SeriesConfig key={series.title} title={series.title} />)}
     </>
   );
 }
