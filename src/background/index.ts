@@ -1,8 +1,4 @@
-import type {
-  StorageAnimeConfig,
-  StorageHidiveConfig,
-  StorageUserHistory,
-} from "~blocker/storage";
+import type { StorageHidiveConfig, StorageUserHistory } from "~blocker/storage";
 import { Storage } from "@plasmohq/storage";
 
 const storage = new Storage();
@@ -18,7 +14,6 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 async function onInstall() {
   try {
     const configFiles = [
-      "assets/configs/default_config.json",
       "assets/configs/hidive.json",
       "assets/configs/user_history_example.json",
     ];
@@ -32,11 +27,9 @@ async function onInstall() {
         return await response.json();
       })
     );
-    const config: StorageAnimeConfig = responses[0];
-    const hidiveConfig: StorageHidiveConfig = responses[1];
-    const userHistory: StorageUserHistory = responses[2];
+    const hidiveConfig: StorageHidiveConfig = responses[0];
+    const userHistory: StorageUserHistory = responses[1];
 
-    storage.set("config", config);
     storage.set("hidive", hidiveConfig);
     storage.set("userHistory", userHistory);
   } catch (error) {

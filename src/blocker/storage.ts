@@ -1,12 +1,5 @@
 import { AnimeType, JikanAPIClient } from "../jikan";
 
-export interface StorageAnimeConfig {
-  /**
-   * @deprecated Replace with series
-   */
-  series: StorageSeriesConfig[];
-}
-
 export interface StorageHidiveConfig {
   series: {
     seasonId: string;
@@ -53,7 +46,7 @@ export type UpdateWatchHistoryArg =
   | {
       webServiceName: "Crunchyroll";
       mediaType: string;
-      titles: string[];
+      title: string;
       season: number;
       episode: number;
     }
@@ -73,9 +66,6 @@ export type UpdateWatchHistoryArg =
 
 export class UserHistoryManager {
   indexes: {
-    series: {
-      [seriesTitle: string]: number;
-    };
     hidive: {
       [hidiveSeasonId: string]: number;
     };
@@ -83,20 +73,15 @@ export class UserHistoryManager {
       [seriesTitle: string]: number;
     };
   };
-  storageAnimeConfig: StorageAnimeConfig;
   hidiveConfig: StorageHidiveConfig;
   storageUserHistory: StorageUserHistory;
 
   constructor(
-    animeConfig: StorageAnimeConfig,
     hidiveConfig: StorageHidiveConfig,
     userHistory: StorageUserHistory,
     private jikanAPIClient: JikanAPIClient = new JikanAPIClient()
   ) {
     const indexes = { series: {}, userHistory: {}, hidive: {} };
-    animeConfig.series.forEach((series, index) => {
-      indexes.series[series.title.toLowerCase()] = index;
-    });
     userHistory.series.forEach((series, index) => {
       indexes.userHistory[series.title.toLowerCase()] = index;
     });
@@ -105,7 +90,6 @@ export class UserHistoryManager {
     });
 
     this.indexes = indexes;
-    this.storageAnimeConfig = animeConfig;
     this.hidiveConfig = hidiveConfig;
     this.storageUserHistory = userHistory;
   }
@@ -172,9 +156,11 @@ export class UserHistoryManager {
     };
   }
 
-  async updateWatchHistory(request: UpdateWatchHistoryArg): Promise<{
+  async updateWatchHistory(
+    seriesConfig: StorageSeriesConfig | null,
+    request: UpdateWatchHistoryArg
+  ): Promise<{
     series?: StorageSeriesConfig;
-    config?: StorageAnimeConfig;
     hidiveConfig?: StorageHidiveConfig;
     userHistory?: StorageUserHistory;
   }> {
@@ -195,21 +181,15 @@ export class UserHistoryManager {
           title,
           season,
         });
-        const seriesIndex = this.indexes.series[title.toLocaleLowerCase()];
 
         const result: {
           series?: StorageSeriesConfig;
-          config: StorageAnimeConfig;
           hidiveConfig: StorageHidiveConfig;
         } = {
-          config: this.storageAnimeConfig,
           hidiveConfig: this.hidiveConfig,
         };
-        let series = null;
-        if (seriesIndex == null) {
-          series = await this.createNewAnimeConfig({ title });
-          this.storageAnimeConfig.series.push(series);
-          result.series = series;
+        if (seriesConfig == null) {
+          result.series = await this.createNewAnimeConfig({ title });
         }
 
         return result;
@@ -225,8 +205,7 @@ export class UserHistoryManager {
       title = this.hidiveConfig.series[index].title;
     } else if (request.webServiceName === "Crunchyroll") {
       season = request.season;
-      const titles = request.titles;
-      title = titles[0];
+      title = request.title;
     } else {
       // @ts-ignore webServiceName becomes never type
       // but this value comes from an input and can be any string
@@ -238,10 +217,8 @@ export class UserHistoryManager {
       return;
     }
 
-    const seriesIndex = this.indexes.series[title.toLocaleLowerCase()];
-    if (seriesIndex == null) {
+    if (seriesConfig == null) {
       const series = await this.createNewAnimeConfig({ title });
-      this.storageAnimeConfig.series.push(series);
       // new series to watch
       this.storageUserHistory.series.push({
         title,
@@ -253,7 +230,6 @@ export class UserHistoryManager {
 
       return {
         series,
-        config: this.storageAnimeConfig,
         userHistory: this.storageUserHistory,
       };
     }
@@ -287,19 +263,6 @@ export class UserHistoryManager {
       season,
       episode,
     });
-
-    // If the main config doesn't load a MAL yet.
-    // This is for a migration from an old data to a new data, and temporary solution
-    const config = this.storageAnimeConfig.series[seriesIndex];
-    if (config == null || (config.tvs == null && config.movies == null)) {
-      const series = await this.createNewAnimeConfig({ title });
-      this.storageAnimeConfig.series[seriesIndex] = series;
-      return {
-        series,
-        config: this.storageAnimeConfig,
-        userHistory: this.storageUserHistory,
-      };
-    }
 
     return {
       userHistory: this.storageUserHistory,

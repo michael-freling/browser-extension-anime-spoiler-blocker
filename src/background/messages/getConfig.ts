@@ -1,10 +1,7 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging";
-import type {
-  StorageAnimeConfig,
-  StorageSeriesConfig,
-  StorageUserHistory,
-} from "~blocker/storage";
+import type { StorageSeriesConfig, StorageUserHistory } from "~blocker/storage";
 import { Storage } from "@plasmohq/storage";
+import { StorageAnimeConfig } from "~blocker";
 
 const storage = new Storage();
 const localStorage = new Storage({

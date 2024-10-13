@@ -1,25 +1,12 @@
-import { config } from "process";
 import { AnimeType, JikanAPIClient, SearchAnimeResponse } from "../jikan";
 import {
   MediaType,
-  StorageAnimeConfig,
   StorageHidiveConfig,
+  StorageSeriesConfig,
   StorageUserHistory,
   UpdateWatchHistoryArg,
   UserHistoryManager,
 } from "./storage";
-
-export function newStorageAnimeConfig(
-  args: Partial<StorageAnimeConfig>
-): StorageAnimeConfig {
-  return mergeObjects(
-    1,
-    {
-      series: [],
-    },
-    args
-  );
-}
 
 function newHidiveConfig(
   args: Partial<StorageHidiveConfig>
@@ -77,36 +64,32 @@ function mergeObjects<T>(depth: number = 1, ...allProps: Object[]): T {
 }
 
 describe("UserHistoryManager", () => {
-  const defaultConfig = newStorageAnimeConfig({
-    series: [
+  const defaultSeriesConfig = {
+    title: "My Hero Academia",
+    keywords: [
+      "My Hero Academia",
+      "My Hero Academia: Two Heroes",
+      "僕のヒーローアカデミア",
+      "僕のヒーローアカデミア THE MOVIE ～2人の英雄（ヒーロー）～",
+    ],
+    tvs: [
       {
         title: "My Hero Academia",
-        keywords: [
-          "My Hero Academia",
-          "My Hero Academia: Two Heroes",
-          "僕のヒーローアカデミア",
-          "僕のヒーローアカデミア THE MOVIE ～2人の英雄（ヒーロー）～",
-        ],
-        tvs: [
-          {
-            title: "My Hero Academia",
-            keywords: ["My Hero Academia", "僕のヒーローアカデミア"],
-            malId: 1,
-          },
-        ],
-        movies: [
-          {
-            title: "My Hero Academia: Two Heroes",
-            keywords: [
-              "My Hero Academia: Two Heroes",
-              "僕のヒーローアカデミア THE MOVIE ～2人の英雄（ヒーロー）～",
-            ],
-            malId: 2,
-          },
-        ],
+        keywords: ["My Hero Academia", "僕のヒーローアカデミア"],
+        malId: 1,
       },
     ],
-  });
+    movies: [
+      {
+        title: "My Hero Academia: Two Heroes",
+        keywords: [
+          "My Hero Academia: Two Heroes",
+          "僕のヒーローアカデミア THE MOVIE ～2人の英雄（ヒーロー）～",
+        ],
+        malId: 2,
+      },
+    ],
+  };
   const defaultHidiveConfig = newHidiveConfig({});
 
   const createMyHeroAcademia = ({
@@ -196,74 +179,73 @@ describe("UserHistoryManager", () => {
     },
   };
 
-  const runTest = async (args: {
-    message: UpdateWatchHistoryArg;
-    config: StorageAnimeConfig;
-    hidiveConfig?: StorageHidiveConfig;
-    mockJikanAPIClientResponses?: {
-      [type: string]: SearchAnimeResponse;
+  const runTestCases = async (webServiceName: string, testCases: any[]) => {
+    const defaultTestCase = {
+      mockJikanAPIClientResponses: defaultMockJikanAPIClientResponses,
+      message: {
+        webServiceName,
+      },
     };
-    expected: {
-      config: StorageAnimeConfig;
-      userHistory: StorageUserHistory;
-    };
-  }) => {
-    const {
-      message,
-      config,
+    testCases = testCases.map((props) =>
+      mergeObjects(1, defaultTestCase, props)
+    ) as any;
 
-      mockJikanAPIClientResponses,
-      expected,
-    } = args;
-    let { hidiveConfig } = args;
-    if (hidiveConfig == null) {
-      hidiveConfig = { series: [] };
-    }
+    test.each(testCases)(
+      "$name",
+      async (args: {
+        message: UpdateWatchHistoryArg;
+        seriesConfig: StorageSeriesConfig;
+        hidiveConfig?: StorageHidiveConfig;
+        mockJikanAPIClientResponses?: {
+          [type: string]: SearchAnimeResponse;
+        };
+        expected: {
+          userHistory: StorageUserHistory;
+        };
+      }) => {
+        const {
+          message,
+          seriesConfig,
 
-    const mockJikanAPIClient: jest.Mocked<JikanAPIClient> = {
-      baseURL: "mock url",
-      searchAnime: jest.fn().mockImplementation(({ type }) => {
-        return mockJikanAPIClientResponses[type];
-      }),
-    };
+          mockJikanAPIClientResponses,
+          expected,
+        } = args;
+        let { hidiveConfig } = args;
+        if (hidiveConfig == null) {
+          hidiveConfig = { series: [] };
+        }
 
-    const manager = new UserHistoryManager(
-      structuredClone(config),
-      structuredClone(hidiveConfig),
-      structuredClone(userHistory),
-      mockJikanAPIClient
+        const mockJikanAPIClient: jest.Mocked<JikanAPIClient> = {
+          baseURL: "mock url",
+          searchAnime: jest.fn().mockImplementation(({ type }) => {
+            return mockJikanAPIClientResponses[type];
+          }),
+        };
+
+        const manager = new UserHistoryManager(
+          structuredClone(hidiveConfig),
+          structuredClone(userHistory),
+          mockJikanAPIClient
+        );
+        const actual = manager.updateWatchHistory(seriesConfig, message);
+        await expect(actual).resolves.toEqual(expected);
+      }
     );
-    const actual = manager.updateWatchHistory(message);
-    await expect(actual).resolves.toEqual(expected);
-  };
-
-  const defaultTestCase = {
-    config: defaultConfig,
-    mockJikanAPIClientResponses: defaultMockJikanAPIClientResponses,
   };
 
   describe("Crunchyroll", () => {
-    const testCases = [
+    runTestCases("Crunchyroll", [
       {
-        name: "Watch next episode, update the config",
+        name: "Watch next episode",
         message: {
           mediaType: MediaType.TVShows,
-          titles: ["My Hero Academia"],
+          title: "My Hero Academia",
           season: 1,
           episode: 3,
         },
-        config: newStorageAnimeConfig({
-          series: [
-            {
-              title: "My Hero Academia",
-              keywords: ["My Hero Academia", "僕のヒーローアカデミア"],
-            },
-          ],
-        }),
+        seriesConfig: defaultSeriesConfig,
         mockJikanAPIClientResponses: defaultMockJikanAPIClientResponses,
         expected: {
-          series: defaultConfig.series[0],
-          config: defaultConfig,
           userHistory: {
             series: [
               createMyHeroAcademia({
@@ -275,13 +257,14 @@ describe("UserHistoryManager", () => {
         },
       },
       {
-        name: "Watch next season, no update for a config",
+        name: "Watch next season",
         message: {
           mediaType: "tv",
-          titles: ["My Hero Academia"],
+          title: "My Hero Academia",
           season: 2,
           episode: 1,
         },
+        seriesConfig: defaultSeriesConfig,
         expected: {
           userHistory: {
             series: [
@@ -298,7 +281,7 @@ describe("UserHistoryManager", () => {
         name: "Watch new series",
         message: {
           mediaType: "tv",
-          titles: ["Demon Slayer", "Kimetsu no Yaiba"],
+          title: "Demon Slayer",
           season: 1,
           episode: 2,
         },
@@ -372,38 +355,6 @@ describe("UserHistoryManager", () => {
               },
             ],
           },
-          config: newStorageAnimeConfig({
-            series: [
-              ...defaultConfig.series,
-              {
-                title: "Demon Slayer",
-                keywords: [
-                  "Demon Slayer",
-                  "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
-                  "劇場版 鬼滅の刃 無限列車編",
-                  "鬼滅の刃",
-                ],
-                tvs: [
-                  {
-                    title: "Demon Slayer",
-                    keywords: ["Demon Slayer", "鬼滅の刃"],
-                    malId: 3,
-                  },
-                ],
-                movies: [
-                  {
-                    title:
-                      "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
-                    keywords: [
-                      "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
-                      "劇場版 鬼滅の刃 無限列車編",
-                    ],
-                    malId: 4,
-                  },
-                ],
-              },
-            ],
-          }),
           userHistory: {
             series: [
               ...userHistory.series,
@@ -422,29 +373,18 @@ describe("UserHistoryManager", () => {
         name: "Watch the episode already watched",
         message: {
           mediaType: "tv",
-          titles: ["My Hero Academia"],
+          title: "My Hero Academia",
           season: 1,
           episode: 1,
         },
+        seriesConfig: defaultSeriesConfig,
       },
-    ].map((props) =>
-      mergeObjects(
-        1,
-        defaultTestCase,
-        {
-          message: {
-            webServiceName: "Crunchyroll",
-          },
-        },
-        props
-      )
-    ) as any;
-    test.each(testCases)("$name", runTest);
+    ]);
   });
 
   describe("HIDIVE", () => {
     describe("season page", () => {
-      const testCases = [
+      runTestCases("HIDIVE", [
         {
           name: "Watch new anime, no similar shows was found from Jikan API",
           message: {
@@ -460,17 +400,6 @@ describe("UserHistoryManager", () => {
               tvs: [],
               movies: [],
             },
-            config: newStorageAnimeConfig({
-              series: [
-                ...defaultConfig.series,
-                {
-                  title: "Demon Slayer",
-                  keywords: ["Demon Slayer"],
-                  tvs: [],
-                  movies: [],
-                },
-              ],
-            }),
             hidiveConfig: {
               series: [
                 {
@@ -560,38 +489,6 @@ describe("UserHistoryManager", () => {
                 },
               ],
             },
-            config: newStorageAnimeConfig({
-              series: [
-                ...defaultConfig.series,
-                {
-                  title: "Demon Slayer",
-                  keywords: [
-                    "Demon Slayer",
-                    "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
-                    "劇場版 鬼滅の刃 無限列車編",
-                    "鬼滅の刃",
-                  ],
-                  tvs: [
-                    {
-                      title: "Demon Slayer",
-                      keywords: ["Demon Slayer", "鬼滅の刃"],
-                      malId: 3,
-                    },
-                  ],
-                  movies: [
-                    {
-                      title:
-                        "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
-                      keywords: [
-                        "Demon Slayer: Kimetsu no Yaiba - The Movie: Mugen Train",
-                        "劇場版 鬼滅の刃 無限列車編",
-                      ],
-                      malId: 4,
-                    },
-                  ],
-                },
-              ],
-            }),
             hidiveConfig: {
               series: [
                 {
@@ -611,11 +508,9 @@ describe("UserHistoryManager", () => {
             season: 2,
             seasonId: "12",
           },
+          seriesConfig: defaultSeriesConfig,
           hidiveConfig: defaultHidiveConfig,
           expected: {
-            config: {
-              series: defaultConfig.series,
-            },
             hidiveConfig: {
               series: [
                 ...defaultHidiveConfig.series,
@@ -637,28 +532,12 @@ describe("UserHistoryManager", () => {
             seasonId: "11",
           },
           hidiveConfig: defaultHidiveConfig,
-          config: {
-            series: defaultConfig.series,
-            // hidive:
-          },
         },
-      ].map((props) =>
-        mergeObjects(
-          1,
-          defaultTestCase,
-          {
-            message: {
-              webServiceName: "HIDIVE",
-            },
-          },
-          props
-        )
-      ) as any;
-      test.each(testCases)("$name", runTest);
+      ]);
     });
 
     describe("video page", () => {
-      const testCases = [
+      runTestCases("HIDIVE", [
         {
           name: "Watch new episode for an anime already watched",
           message: {
@@ -666,6 +545,7 @@ describe("UserHistoryManager", () => {
             seasonId: "11",
             episode: 2,
           },
+          seriesConfig: defaultSeriesConfig,
           hidiveConfig: defaultHidiveConfig,
           expected: {
             userHistory: {
@@ -694,19 +574,7 @@ describe("UserHistoryManager", () => {
             episode: 1,
           },
         },
-      ].map((props) =>
-        mergeObjects(
-          1,
-          defaultTestCase,
-          {
-            message: {
-              webServiceName: "HIDIVE",
-            },
-          },
-          props
-        )
-      ) as any;
-      test.each(testCases)("$name", runTest);
+      ]);
     });
   });
 });

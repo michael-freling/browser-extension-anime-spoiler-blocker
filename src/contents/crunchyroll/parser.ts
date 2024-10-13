@@ -1,4 +1,5 @@
 export interface ParsedTitle {
+  title: string;
   titles: string[];
   episode: number;
   season: number;
@@ -29,8 +30,10 @@ export function parseTitle(title: string): ParsedTitle | null {
     }
   }
 
+  const titles = series.split(": ");
   return {
-    titles: series.split(": "),
+    title: titles[0],
+    titles,
     episode,
     season,
   };
