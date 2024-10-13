@@ -1,8 +1,12 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging";
-import type { StorageAnimeConfig, StorageUserHistory } from "~blocker/storage";
+import type { StorageSeriesConfig, StorageUserHistory } from "~blocker/storage";
 import { Storage } from "@plasmohq/storage";
+import { StorageAnimeConfig } from "~blocker";
 
 const storage = new Storage();
+const localStorage = new Storage({
+  area: "local",
+});
 
 const handler: PlasmoMessaging.MessageHandler<
   {},
@@ -11,16 +15,23 @@ const handler: PlasmoMessaging.MessageHandler<
     userHistory: StorageUserHistory;
   }
 > = async (req, res) => {
-  Promise.all([storage.get("config"), storage.get("userHistory")]).then(
-    (result) => {
-      const [config, userHistory]: [StorageAnimeConfig, StorageUserHistory] =
-        result as any;
-      res.send({
-        config,
-        userHistory,
-      });
-    }
-  );
+  const userHistory: StorageUserHistory = (await storage.get(
+    "userHistory"
+  )) as StorageUserHistory;
+
+  const titles = userHistory.series.map((series) => series.title);
+  let config: StorageAnimeConfig = {
+    series: await Promise.all(
+      titles.map((title) =>
+        localStorage.get<StorageSeriesConfig>(`series.${title}`)
+      )
+    ),
+  };
+
+  res.send({
+    config,
+    userHistory,
+  });
 };
 
 export default handler;

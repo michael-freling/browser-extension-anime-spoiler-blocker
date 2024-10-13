@@ -53,7 +53,7 @@ async function onLoad() {
       body: {
         ...episode,
         type: "updateWatchHistory",
-        webServiceName: "crunchyroll",
+        webServiceName: "Crunchyroll",
         mediaType: MediaType.TVShows,
       },
     });

@@ -1,9 +1,13 @@
-import { StorageAnimeConfig, StorageUserHistory } from "./storage";
+import { StorageSeriesConfig, StorageUserHistory } from "./storage";
 
 export interface Spoiler {
   title: string;
   season?: number;
   episode?: number;
+}
+
+export interface StorageAnimeConfig {
+  series: StorageSeriesConfig[];
 }
 
 export class TextSpoilerAnalyzer {

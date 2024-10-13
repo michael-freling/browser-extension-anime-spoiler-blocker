@@ -1,7 +1,7 @@
 import "react";
 import React, { useEffect, useState } from "react";
 import { TextSpoilerAnalyzer, Spoiler } from "../blocker";
-import { StorageUserHistory, StorageAnimeConfig } from "~blocker/storage";
+import { StorageUserHistory, StorageSeriesConfig } from "~blocker/storage";
 import type {
   PlasmoCSConfig,
   PlasmoCSUIProps,
@@ -13,6 +13,10 @@ import { getXPathFromElement } from "~dom/xpath";
 export const config: PlasmoCSConfig = {
   matches: ["https://www.youtube.com/*"],
 };
+
+export interface StorageAnimeConfig {
+  series: StorageSeriesConfig[];
+}
 
 class VideoSpoilerFilter {
   textAnalyzer: TextSpoilerAnalyzer;
