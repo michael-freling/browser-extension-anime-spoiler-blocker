@@ -14,8 +14,9 @@ There are a few features supported to block spoilers
 ## Supported services
 
 Currently, spoilers are blocked on YouTube only.
-Currently, [Crunchyroll](https://www.crunchyroll.com/) is the only supported service to store a watch history on your chrome browser.
+Currently, [Crunchyroll](https://www.crunchyroll.com/) and [HIDIVE](https://www.hidive.com/) are the only supported services to store a watch history on your chrome browser.
 
+This service depends on [Jikan API](https://jikan.moe/) to collect keywords for each anime. The information is stored locally and it's not shared your browsers even if you opt in syncing extension data on Chrome.
 
 ## Development
 
