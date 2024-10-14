@@ -72,8 +72,8 @@ jobs:
         with:
           artifacts: "build/*.zip"
           # Following fields are for debugging
-          # allowUpdates: true
-          # tag: "v0.1.1"
+          allowUpdates: true
+          # tag: "v0.3.0"
 
       # Submit a release into a web store
       # https://docs.plasmo.com/framework/workflows/submit
