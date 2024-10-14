@@ -11,27 +11,32 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   }
 });
 
+async function setConfigK<T>(key: string, configFilePath: string) {
+  const url = chrome.runtime.getURL(configFilePath);
+  const response = await fetch(url);
+  if (response.status != 200) {
+    throw new Error("failed to fetch " + configFilePath);
+  }
+  const json = await response.json();
+  await storage.set(key, json);
+}
+
 async function onInstall() {
   try {
-    const configFiles = [
-      "assets/configs/hidive.json",
-      "assets/configs/user_history_example.json",
-    ];
-    const responses = await Promise.all(
-      configFiles.map(async (configFile) => {
-        const url = chrome.runtime.getURL(configFile);
-        const response = await fetch(url);
-        if (response.status != 200) {
-          throw new Error("failed to fetch default.json");
-        }
-        return await response.json();
-      })
-    );
-    const hidiveConfig: StorageHidiveConfig = responses[0];
-    const userHistory: StorageUserHistory = responses[1];
-
-    storage.set("hidive", hidiveConfig);
-    storage.set("userHistory", userHistory);
+    const hidiveConfig = await storage.get("hidive");
+    if (hidiveConfig == null) {
+      (await setConfigK)<StorageHidiveConfig>(
+        "hidive",
+        "assets/configs/hidive.json"
+      );
+    }
+    const userHistoryConfig = await storage.get("userHistory");
+    if (userHistoryConfig == null) {
+      await setConfigK<StorageUserHistory>(
+        "userHistory",
+        "assets/configs/user_history_example.json"
+      );
+    }
   } catch (error) {
     console.error("failed to run main", error);
   }
