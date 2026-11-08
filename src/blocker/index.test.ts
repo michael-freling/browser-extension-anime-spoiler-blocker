@@ -1,4 +1,4 @@
-import { TextSpoilerAnalyzer } from ".";
+import { TextSpoilerAnalyzer, buildKeywordMatcher } from ".";
 
 describe("TextParser", () => {
   describe("extractEpisodeFromText", () => {
@@ -92,7 +92,7 @@ describe("TextParser", () => {
               },
             },
           ],
-        }
+        },
       );
       const actual = textParser.extractEpisodeFromText(text, "Test", keywords);
       expect(actual).toEqual(expected);
@@ -197,5 +197,118 @@ describe("TextParser", () => {
       const actual = textParser.extractSpoiler(text);
       expect(actual).toEqual(expected);
     });
+  });
+});
+
+describe("TextSpoilerAnalyzer edge cases", () => {
+  const history = {
+    series: [{ title: "Test", tv: { season: 1, episode: 2 } }],
+  };
+  const analyzer = (keywords: string[] = ["test1"]) =>
+    new TextSpoilerAnalyzer({ series: [{ title: "Test", keywords }] }, history);
+
+  test.each([
+    {
+      name: "SNEN format",
+      text: "Test1 S2E5 reaction",
+      expected: { title: "Test", season: 2, episode: 5 },
+    },
+    {
+      name: "Ep. with a dot",
+      text: "Test1 Ep.5",
+      expected: { title: "Test", season: 1, episode: 5 },
+    },
+    {
+      name: "PS5 is not a season",
+      text: "Test1 on PS5",
+      expected: { title: "Test" },
+    },
+    {
+      name: "deep 2 is not an episode",
+      text: "Test1 deep 2 dive",
+      expected: { title: "Test" },
+    },
+    {
+      name: "A keyword inside another word is not matched",
+      text: "Mytest1s season 2",
+      expected: null,
+    },
+    {
+      name: "Full-width characters are normalized",
+      text: "ＴＥＳＴ１ Season 2",
+      expected: { title: "Test", season: 2 },
+    },
+  ])("$name", ({ text, expected }) => {
+    expect(analyzer().extractEpisodeFromText(text, "Test", ["test1"])).toEqual(
+      expected,
+    );
+  });
+
+  test("Japanese keywords match inside a sentence", () => {
+    expect(
+      analyzer(["鬼滅の刃"]).extractEpisodeFromText(
+        "アニメ鬼滅の刃 Season 3",
+        "Test",
+        ["鬼滅の刃"],
+      ),
+    ).toEqual({ title: "Test", season: 3 });
+  });
+
+  test("Too short keywords are ignored", () => {
+    expect(buildKeywordMatcher(["ao", " ", "86"])).toBeNull();
+    expect(analyzer(["ao"]).extractSpoiler("ao season 9").title).toBe("");
+  });
+
+  test("Keywords that start or end with symbols are matched", () => {
+    expect(buildKeywordMatcher(["!test!"])!.test("x!test!y")).toBe(true);
+  });
+
+  test("The first matched spoiler is returned", () => {
+    const multiple = new TextSpoilerAnalyzer(
+      {
+        series: [
+          { title: "A", keywords: ["alpha"] },
+          { title: "B", keywords: ["beta"] },
+        ],
+      },
+      {
+        series: [
+          { title: "A", tv: { season: 1, episode: 1 } },
+          { title: "B", tv: { season: 1, episode: 1 } },
+        ],
+      },
+    );
+    expect(multiple.extractSpoiler("alpha beta season 2 episode 1")).toEqual({
+      title: "A",
+      season: 2,
+      episode: 1,
+    });
+  });
+
+  test("A series which is not in a watch history is not a spoiler", () => {
+    const noHistory = new TextSpoilerAnalyzer(
+      { series: [{ title: "Test", keywords: ["test1"] }] },
+      { series: [] },
+    );
+    expect(noHistory.extractSpoiler("test1 season 2 episode 1").title).toBe("");
+  });
+
+  test("Missing configurations do not throw", () => {
+    const empty = new TextSpoilerAnalyzer(
+      { series: [null as any, { title: "Test" } as any] },
+      undefined as any,
+    );
+    expect(empty.extractSpoiler("Test season 2").title).toBe("");
+    expect(
+      new TextSpoilerAnalyzer(undefined as any, { series: [] }).extractSpoiler(
+        "x",
+      ).title,
+    ).toBe("");
+  });
+
+  test("The configuration is not mutated", () => {
+    const config = { series: [{ title: "Test", keywords: ["TEST1"] }] };
+    new TextSpoilerAnalyzer(config, history);
+    expect(config.series[0].keywords).toEqual(["TEST1"]);
   });
 });

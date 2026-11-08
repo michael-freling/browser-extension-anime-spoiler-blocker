@@ -69,3 +69,10 @@ describe("parsedTitle", () => {
     expect(parseTitle(title)).toEqual(expected);
   });
 });
+
+test.each(["My Hero Academia", "My Hero Academia | Trailer"])(
+  "%s is not an episode",
+  (title) => {
+    expect(parseTitle(title)).toBeNull();
+  },
+);

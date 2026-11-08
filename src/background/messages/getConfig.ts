@@ -15,17 +15,20 @@ const handler: PlasmoMessaging.MessageHandler<
     userHistory: StorageUserHistory;
   }
 > = async (req, res) => {
-  const userHistory: StorageUserHistory = (await storage.get(
-    "userHistory"
-  )) as StorageUserHistory;
+  // Nothing is stored yet right after an installation
+  const userHistory: StorageUserHistory = ((await storage.get(
+    "userHistory",
+  )) as StorageUserHistory) ?? { series: [] };
 
-  const titles = userHistory.series.map((series) => series.title);
-  let config: StorageAnimeConfig = {
-    series: await Promise.all(
-      titles.map((title) =>
-        localStorage.get<StorageSeriesConfig>(`series.${title}`)
-      )
+  const titles = (userHistory.series ?? []).map((series) => series.title);
+  const seriesConfigs = await Promise.all(
+    titles.map((title) =>
+      localStorage.get<StorageSeriesConfig>(`series.${title}`),
     ),
+  );
+  const config: StorageAnimeConfig = {
+    // A series config can be missing if fetching it from Jikan failed
+    series: seriesConfigs.filter((series) => series != null),
   };
 
   res.send({

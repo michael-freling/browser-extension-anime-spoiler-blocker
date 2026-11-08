@@ -55,7 +55,7 @@ async function onLoad() {
     path: url.pathname,
     seasonId: url.searchParams.get("seasonId"),
     title: title,
-    name: name.getAttribute("content") ?? "",
+    name: name?.getAttribute("content") ?? "",
   });
   if (parsedResult == null) {
     return;

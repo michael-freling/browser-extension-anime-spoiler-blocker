@@ -30,6 +30,23 @@ describe("parse", () => {
         },
       },
       {
+        name: "Episode page with an unknown title",
+        args: {
+          title: "Cruelty",
+          path: "/video/1",
+          seasonId: "10",
+          name: "something unknown",
+        },
+      },
+      {
+        name: "Season page without a numeric season ID",
+        args: {
+          title: "Oshi No Ko",
+          path: "/season/abc",
+          name: "Oshi No Ko",
+        },
+      },
+      {
         name: "Episode page without a season ID",
         args: {
           title: "E1 - Cruelty",

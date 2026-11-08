@@ -17,10 +17,8 @@ interface Cache {
 const cache: Cache = {
   data: {},
   set: function (key: string, callback: () => void) {
-    if (cache.data[key] == null) {
-      callback();
-      cache.data[key] = true;
-    }
+    callback();
+    cache.data[key] = true;
   },
 };
 
@@ -48,6 +46,9 @@ async function onLoad() {
   }
   cache.set(titleContent, () => {
     const episode = parseTitle(titleContent);
+    if (episode == null) {
+      return;
+    }
     sendToBackground({
       name: "updateWatchHistory",
       body: {

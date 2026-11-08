@@ -24,7 +24,7 @@ const handler: PlasmoMessaging.MessageHandler<
     return;
   }
 
-  Promise.all([storage.get("hidive"), storage.get("userHistory")]).then(
+  await Promise.all([storage.get("hidive"), storage.get("userHistory")]).then(
     async (promises) => {
       const [hidiveConfig, userHistory]: [
         StorageHidiveConfig,
@@ -33,7 +33,7 @@ const handler: PlasmoMessaging.MessageHandler<
 
       let title: string = "";
       if (!("title" in message)) {
-        const series = hidiveConfig.series.filter(
+        const series = (hidiveConfig?.series ?? []).filter(
           (series) => series.seasonId == message.seasonId
         );
         if (series.length > 0) {
