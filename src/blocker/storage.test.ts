@@ -578,3 +578,83 @@ describe("UserHistoryManager", () => {
     });
   });
 });
+
+describe("UserHistoryManager edge cases", () => {
+  const seriesConfig: StorageSeriesConfig = {
+    title: "Test",
+    keywords: ["Test"],
+  };
+  const jikanClient = {
+    searchAnime: jest.fn(async () => ({ data: [] })),
+  } as unknown as JikanAPIClient;
+  const newManager = (userHistory: StorageUserHistory) =>
+    new UserHistoryManager({ series: [] }, userHistory, jikanClient);
+  const history = () => ({
+    series: [{ title: "Test", tv: { season: 2, episode: 3 } }],
+  });
+
+  test("An unsupported web service throws an error", async () => {
+    await expect(
+      newManager(history()).updateWatchHistory(seriesConfig, {
+        webServiceName: "Unknown",
+      } as any)
+    ).rejects.toThrow("Unsupported web service: Unknown");
+  });
+
+  test("A media type other than TV shows is ignored", async () => {
+    expect(
+      await newManager(history()).updateWatchHistory(seriesConfig, {
+        webServiceName: "Crunchyroll",
+        mediaType: "movie",
+        title: "Test",
+        season: 1,
+        episode: 1,
+      })
+    ).toBeUndefined();
+  });
+
+  test("A series with a config but without a history is added", async () => {
+    expect(
+      await newManager({ series: [] }).updateWatchHistory(seriesConfig, {
+        webServiceName: "Crunchyroll",
+        mediaType: MediaType.TVShows,
+        title: "Test",
+        season: 1,
+        episode: 4,
+      })
+    ).toEqual({
+      userHistory: {
+        series: [{ title: "Test", tv: { season: 1, episode: 4 } }],
+      },
+    });
+  });
+
+  test("A previous season does not update a history", async () => {
+    expect(
+      await newManager(history()).updateWatchHistory(seriesConfig, {
+        webServiceName: "Crunchyroll",
+        mediaType: MediaType.TVShows,
+        title: "Test",
+        season: 1,
+        episode: 10,
+      })
+    ).toBeUndefined();
+  });
+
+  test("A HIDIVE episode of an unknown season is ignored", async () => {
+    expect(
+      await newManager(history()).updateWatchHistory(seriesConfig, {
+        webServiceName: "HIDIVE",
+        mediaType: MediaType.TVShows,
+        seasonId: "unknown",
+        episode: 1,
+      })
+    ).toBeUndefined();
+  });
+
+  test("The default Jikan API client is used when it is not passed", () => {
+    expect(
+      new UserHistoryManager({ series: [] }, { series: [] })
+    ).toBeInstanceOf(UserHistoryManager);
+  });
+});

@@ -11,8 +11,8 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
+        # The version comes from packageManager in package.json
         with:
-          version: 8
           run_install: false
 
       - uses: actions/setup-node@v4
@@ -32,8 +32,8 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
+        # The version comes from packageManager in package.json
         with:
-          version: 8
           run_install: false
 
       - uses: actions/setup-node@v4
@@ -43,5 +43,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
-      - name: Run tests
-        run: pnpm test
+      # Plasmo generates types for messages, which tests require
+      - name: Generate Plasmo types
+        run: pnpm plasmo build --target=chrome-mv3
+      - name: Check types
+        run: pnpm typecheck
+      - name: Run tests with a coverage check
+        run: pnpm test:coverage

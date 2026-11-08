@@ -14,7 +14,7 @@ interface InputJSONFieldProps {
   setValue: (object: Object) => void;
 }
 
-type InputJSONFieldStatus = "no" | "editing" | "saved";
+type InputJSONFieldStatus = "no" | "editing" | "saved" | "invalid";
 
 function InputJSONField({
   label,
@@ -31,7 +31,13 @@ function InputJSONField({
     <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
       <h2>
         {label}.{" "}
-        {status == "saved" ? "Saved" : status == "editing" ? "Editing..." : ""}
+        {status == "saved"
+          ? "Saved"
+          : status == "editing"
+            ? "Editing..."
+            : status == "invalid"
+              ? "Invalid JSON"
+              : ""}
       </h2>
       <textarea
         disabled={disabled ?? false}
@@ -43,7 +49,14 @@ function InputJSONField({
           setValue(event.target.value);
         }}
         onBlur={(event) => {
-          setObject(JSON.parse(value));
+          let object: Object;
+          try {
+            object = JSON.parse(value);
+          } catch {
+            setStatus("invalid");
+            return;
+          }
+          setObject(object);
           setStatus("saved");
           setTimeout(() => {
             setStatus("no");

@@ -11,12 +11,20 @@
   ],
   "compilerOptions": {
     "jsx": "react-jsx",
+    // TypeScript 7 removed baseUrl and moduleResolution "node",
+    // which Plasmo's base config still sets
+    "moduleResolution": "bundler",
+    // TypeScript 7 no longer includes all @types packages by default
+    "types": [
+      "chrome",
+      "jest",
+      "node"
+    ],
     "paths": {
       "~*": [
         "./src/*"
       ]
     },
-    "baseUrl": ".",
     "verbatimModuleSyntax": false
   }
 }

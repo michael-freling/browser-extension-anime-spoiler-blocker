@@ -7,6 +7,9 @@ export interface ParsedTitle {
 
 export function parseTitle(title: string): ParsedTitle | null {
   const titleSubStrings = title.split(" | ");
+  if (titleSubStrings.length < 2) {
+    return null;
+  }
   let match = titleSubStrings[1].match(/^E(?<episode>[\d\.]+) +\-/i);
   if (match == null) {
     return null;

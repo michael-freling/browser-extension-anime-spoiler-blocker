@@ -10,119 +10,172 @@ export interface StorageAnimeConfig {
   series: StorageSeriesConfig[];
 }
 
+interface AnalyzedSeries {
+  title: string;
+  matcher: RegExp | null;
+  watched?: {
+    season: number;
+    episode: number;
+  };
+}
+
+// Keywords shorter than this are too generic to match safely, e.g. "ao" or "86"
+const MIN_KEYWORD_LENGTH = 3;
+
+// "S2E5" or "S2 E5"
+const SEASON_EPISODE_PATTERN = /(?<![a-z0-9])s(\d+)\s*e(\d+)(?![0-9])/;
+// "Season 2", "S2", but not "PS5"
+const SEASON_PATTERN = /(?<![a-z0-9])(?:season\s*|s)(\d+)(?![0-9])/;
+// "Episode 5", "Ep 5", "Ep.5", but not "deep 2"
+const EPISODE_PATTERN = /(?<![a-z0-9])(?:episode|ep)\.?\s*(\d+)(?![0-9])/;
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalize(text: string): string {
+  return text.normalize("NFKC").toLowerCase();
+}
+
+/**
+ * Build a single RegExp that matches any keyword as a whole word.
+ * Word boundaries are only enforced on ASCII letters and digits, so keywords
+ * in languages without spaces, like Japanese, still match inside a sentence.
+ */
+export function buildKeywordMatcher(keywords: string[]): RegExp | null {
+  const patterns = Array.from(
+    new Set(
+      keywords
+        .map((keyword) => normalize(keyword).trim())
+        .filter((keyword) => keyword.length >= MIN_KEYWORD_LENGTH),
+    ),
+  )
+    // Prefer longer keywords when several of them overlap
+    .sort((a, b) => b.length - a.length)
+    .map((keyword) => {
+      const prefix = /^[a-z0-9]/.test(keyword) ? "(?<![a-z0-9])" : "";
+      const suffix = /[a-z0-9]$/.test(keyword) ? "(?![a-z0-9])" : "";
+      return prefix + escapeRegExp(keyword) + suffix;
+    });
+  if (patterns.length == 0) {
+    return null;
+  }
+  return new RegExp(patterns.join("|"));
+}
+
 export class TextSpoilerAnalyzer {
-  config: StorageAnimeConfig;
-  userHistory: StorageUserHistory;
+  private series: AnalyzedSeries[];
+  private matcherCache = new Map<string[], RegExp | null>();
 
   constructor(config: StorageAnimeConfig, userHistory: StorageUserHistory) {
-    config.series.forEach((thisSeries) => {
-      thisSeries.keywords = thisSeries.keywords.map((keyword) => {
-        return keyword.toLowerCase();
-      });
+    const watched = new Map<string, AnalyzedSeries["watched"]>();
+    (userHistory?.series ?? []).forEach((series) => {
+      watched.set(series.title.toLowerCase(), series.tv);
     });
 
-    this.config = config;
-    this.userHistory = userHistory;
+    this.series = (config?.series ?? [])
+      .filter((series) => series != null)
+      .map((series) => ({
+        title: series.title,
+        matcher: this.getMatcher(series.keywords ?? []),
+        watched: watched.get(series.title.toLowerCase()),
+      }));
+  }
+
+  private getMatcher(keywords: string[]): RegExp | null {
+    if (!this.matcherCache.has(keywords)) {
+      this.matcherCache.set(keywords, buildKeywordMatcher(keywords));
+    }
+    return this.matcherCache.get(keywords)!;
   }
 
   extractEpisodeFromText(
     text: string,
     title: string,
-    keywords: string[]
+    keywords: string[],
   ): Spoiler | null {
-    text = text.toLowerCase();
-    let isTextFound = false;
-    keywords.forEach((configKeyword) => {
-      if (text.includes(configKeyword)) {
-        isTextFound = true;
-      }
-    });
-    if (!isTextFound) {
+    return this.extractEpisode(
+      normalize(text),
+      title,
+      this.getMatcher(keywords),
+    );
+  }
+
+  private extractEpisode(
+    text: string,
+    title: string,
+    matcher: RegExp | null,
+  ): Spoiler | null {
+    if (matcher == null || !matcher.test(text)) {
       return null;
     }
 
-    // TODO: Currently, both of season and episode are required to be matched
     // TODO: season 2 part 2 episode X can be happening
-    // TODO: episode 19 (meaning season 1) can be happening
-    let season;
-    let matches = text.match(/(season\s|S)(?<season>[0-9]+)/i);
-    if (matches) {
-      season = parseInt(matches.groups!.season, 10);
-    }
-    let episode;
-    matches = text.match(/(episode\s|Ep\s?)(?<episode>[0-9]+)/i);
-    if (matches) {
-      episode = parseInt(matches.groups!.episode, 10);
-    }
-    if (season == undefined && episode == undefined) {
-      return {
-        title,
-      };
-    } else if (episode == undefined) {
-      return {
-        title,
-        season,
-      };
-    } else if (season == undefined) {
-      season = 1;
+    let season: number | undefined;
+    let episode: number | undefined;
+    const seasonEpisode = text.match(SEASON_EPISODE_PATTERN);
+    if (seasonEpisode) {
+      season = parseInt(seasonEpisode[1], 10);
+      episode = parseInt(seasonEpisode[2], 10);
+    } else {
+      const seasonMatch = text.match(SEASON_PATTERN);
+      if (seasonMatch) {
+        season = parseInt(seasonMatch[1], 10);
+      }
+      const episodeMatch = text.match(EPISODE_PATTERN);
+      if (episodeMatch) {
+        episode = parseInt(episodeMatch[1], 10);
+      }
     }
 
-    return {
-      title: title,
-      season,
-      episode,
-    };
+    if (season == undefined && episode == undefined) {
+      return { title };
+    }
+    if (episode == undefined) {
+      return { title, season };
+    }
+    // An episode without a season, e.g. "episode 19", means the first season
+    return { title, season: season ?? 1, episode };
   }
 
   extractSpoiler(text: string): Spoiler {
-    let result: Spoiler = {
+    const normalizedText = normalize(text);
+    for (const series of this.series) {
+      const spoiler = this.extractEpisode(
+        normalizedText,
+        series.title,
+        series.matcher,
+      );
+      if (spoiler == null) {
+        continue;
+      }
+
+      // if no season, it's a spoiler
+      if (spoiler.season == null) {
+        return spoiler;
+      }
+
+      const watched = series.watched;
+      if (watched == null) {
+        // The title in the series is supposed to match with a user history
+        continue;
+      }
+      if (spoiler.season < watched.season) {
+        continue;
+      }
+      if (
+        spoiler.season == watched.season &&
+        (spoiler.episode == undefined || spoiler.episode <= watched.episode)
+      ) {
+        continue;
+      }
+      return spoiler;
+    }
+
+    return {
       title: "",
       season: 0,
       episode: 0,
     };
-    this.config.series.forEach((config) => {
-      const episodeFromText = this.extractEpisodeFromText(
-        text,
-        config.title,
-        config.keywords
-      );
-      if (episodeFromText == null) {
-        return;
-      }
-
-      // if no season, it's a spoiler
-      if (episodeFromText.season == null) {
-        result = episodeFromText;
-        return;
-      }
-
-      const seriesFromHistory = this.userHistory.series.find(
-        (series) => series.title.toLowerCase() == config.title.toLowerCase()
-      );
-      if (seriesFromHistory == null) {
-        // The title in the series is supposed to match with a user history
-        return;
-      }
-
-      const allowedEpisode = seriesFromHistory.tv;
-      if (episodeFromText.season < allowedEpisode.season) {
-        return;
-      }
-      if (
-        episodeFromText.season == allowedEpisode.season &&
-        (episodeFromText.episode == undefined ||
-          episodeFromText.episode <= allowedEpisode.episode)
-      ) {
-        return;
-      }
-      // if the title doesn't include an episode, conservatively recognize the video as a spoiler
-      // if (matches.length == 2) {
-      //   return false;
-      // }
-
-      result = episodeFromText;
-    });
-
-    return result;
   }
 }

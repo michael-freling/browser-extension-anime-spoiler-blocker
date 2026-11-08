@@ -1,5 +1,7 @@
 build
 node_modules
+coverage
 
 .env
 .plasmo
+tsconfig.tsbuildinfo

@@ -1,0 +1,9 @@
+# Dependencies allowed to run install scripts. They download native binaries
+# that Plasmo needs to build the extension.
+allowBuilds:
+  '@parcel/watcher': true
+  '@swc/core': true
+  esbuild: true
+  lmdb: true
+  msgpackr-extract: true
+  sharp: true
