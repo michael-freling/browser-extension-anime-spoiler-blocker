@@ -39,6 +39,19 @@ describe("parse", () => {
         },
       },
       {
+        name: "Season page of the first season",
+        args: {
+          title: "Oshi No Ko",
+          path: "/season/123",
+          name: "Oshi No Ko",
+        },
+        expected: {
+          seasonId: "123",
+          season: 1,
+          title: "Oshi No Ko",
+        },
+      },
+      {
         name: "Season page without a numeric season ID",
         args: {
           title: "Oshi No Ko",

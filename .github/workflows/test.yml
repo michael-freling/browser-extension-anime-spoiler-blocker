@@ -46,5 +46,7 @@ jobs:
       # Plasmo generates types for messages, which tests require
       - name: Generate Plasmo types
         run: pnpm plasmo build --target=chrome-mv3
+      - name: Check types
+        run: pnpm typecheck
       - name: Run tests with a coverage check
         run: pnpm test:coverage
