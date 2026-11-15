@@ -71,6 +71,8 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           artifacts: "build/*.zip"
+          # List merged pull requests in the release notes
+          generateReleaseNotes: true
           # Following fields are for debugging
           allowUpdates: true
           # tag: "v0.3.0"
