@@ -23,3 +23,17 @@ This service depends on [Jikan API](https://jikan.moe/) to collect keywords for 
 There are 2 versions of published extensions
 - production: Extensions to publish from web stores of each browser like Chrome. This release cannot be installed from the GitHub release page.
 - staging: Extensions that can be installed from the GitHub release page and run them.
+
+## Testing
+
+```sh
+pnpm test:coverage  # Unit tests, with at least 95% coverage
+pnpm typecheck      # Type check
+pnpm test:e2e       # Build the extension and run it in Chromium on a saved YouTube page
+```
+
+The e2e tests run offline: YouTube is served from `e2e/snapshots/youtube-search.html`.
+To refresh the snapshot from YouTube, run `pnpm e2e:snapshot`.
+Install Chromium for Playwright once with `pnpm exec playwright install chromium`.
+
+See [docs/architecture.md](docs/architecture.md) for how the extension works.

@@ -15,6 +15,8 @@ const config: Config = {
       },
     ],
   },
+  // e2e/ is run by Playwright
+  testPathIgnorePatterns: ["/node_modules/", "<rootDir>/e2e/"],
   moduleNameMapper: {
     "^~(.*)$": "<rootDir>/src/$1",
   },

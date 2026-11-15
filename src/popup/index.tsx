@@ -32,9 +32,8 @@ export default function IndexPopup() {
       <ul>
         <li
           onClick={() => {
-            const extensionID = process.env.PLASMO_PUBLIC_EXTENSION_ID;
-            const url = `extension://${extensionID}/options.html`;
-            chrome.tabs.create({ url });
+            // Works for any extension ID, e.g. development builds and Edge
+            chrome.runtime.openOptionsPage();
           }}
         >
           Settings
