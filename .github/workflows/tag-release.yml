@@ -33,9 +33,10 @@ jobs:
             echo "::error file=VERSION::'$version' is not a semantic version like 1.2.3"
             exit 1
           fi
+          # Extension versions must be numeric, so package.json has VERSION without a suffix like -rc1
           package_version=$(node -p "require('./package.json').version")
-          if [ "$version" != "$package_version" ]; then
-            echo "::error file=package.json::The version in package.json ($package_version) must match VERSION ($version)"
+          if [ "${version%%-*}" != "$package_version" ]; then
+            echo "::error file=package.json::The version in package.json ($package_version) must be ${version%%-*}, the version in VERSION ($version) without a suffix"
             exit 1
           fi
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
