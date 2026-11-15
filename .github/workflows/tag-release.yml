@@ -1,0 +1,79 @@
+name: Release a new version
+
+# Updating VERSION on main creates the v<VERSION> tag and publishes a release.
+# On pull requests, it only checks that the version can be released.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - VERSION
+  pull_request:
+    paths:
+      - VERSION
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      created: ${{ steps.tag.outputs.created }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Fetch tags to check whether the version was already released
+          fetch-depth: 0
+
+      - name: Read VERSION
+        id: version
+        run: |
+          version=$(tr -d '[:space:]' < VERSION)
+          if ! echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error file=VERSION::'$version' is not a semantic version like 1.2.3"
+            exit 1
+          fi
+          package_version=$(node -p "require('./package.json').version")
+          if [ "$version" != "$package_version" ]; then
+            echo "::error file=package.json::The version in package.json ($package_version) must match VERSION ($version)"
+            exit 1
+          fi
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create the tag
+        id: tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
+            if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+              echo "::error file=VERSION::$TAG was already released. Update VERSION to a new version."
+              exit 1
+            fi
+            echo "::notice::$TAG already exists, so nothing is released"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            echo "::notice::$TAG will be created and released when this pull request is merged"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+  # A tag pushed with GITHUB_TOKEN doesn't trigger other workflows,
+  # so the release workflow is called directly
+  release:
+    needs: tag
+    if: needs.tag.outputs.created == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.tag.outputs.tag }}
+    secrets: inherit

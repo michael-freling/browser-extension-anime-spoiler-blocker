@@ -1,9 +1,17 @@
 name: Publish new releases
 
 on:
+  # Tags pushed by hand
   push:
     tags:
       - "*"
+  # Tags created by tag-release.yml when VERSION is updated
+  workflow_call:
+    inputs:
+      tag:
+        description: The tag to release, e.g. v1.2.3
+        required: true
+        type: string
 
 jobs:
   build:
@@ -15,6 +23,8 @@ jobs:
     environment: ${{ matrix.env }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
@@ -70,7 +80,12 @@ jobs:
       # https://earthly.dev/blog/github-action-artifacts/
       - uses: ncipollo/release-action@v1
         with:
+          tag: ${{ inputs.tag || github.ref_name }}
+          # Tags like v1.2.3-rc1 are published as pre-releases
+          prerelease: ${{ contains(inputs.tag || github.ref_name, '-') }}
           artifacts: "build/*.zip"
+          # List merged pull requests in the release notes
+          generateReleaseNotes: true
           # Following fields are for debugging
           allowUpdates: true
           # tag: "v0.3.0"
