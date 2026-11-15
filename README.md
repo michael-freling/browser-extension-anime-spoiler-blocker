@@ -27,9 +27,10 @@ There are 2 versions of published extensions
 
 ## Releasing
 
-1. In a pull request, update the version in both `VERSION` and `package.json`.
+1. In a pull request, update the version in `VERSION` and `package.json`.
+   For a pre-release, add a suffix only in `VERSION`, like `1.2.3-rc1`, because extension versions must be numeric: `package.json` stays `1.2.3`.
 2. When it's merged, CI creates the `v<VERSION>` tag and publishes a GitHub release with the extensions for Chrome and Edge.
-   Versions with a suffix, like `1.2.3-rc1`, are published as pre-releases.
+   Versions with a suffix are published as pre-releases.
 3. Upload the production zips to the Chrome Web Store and Edge Add-ons.
 
 ## Testing

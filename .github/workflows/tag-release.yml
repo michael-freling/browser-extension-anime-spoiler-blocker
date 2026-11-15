@@ -17,9 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    outputs:
-      tag: ${{ steps.version.outputs.tag }}
-      created: ${{ steps.tag.outputs.created }}
+      # To run release.yml
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,9 +33,10 @@ jobs:
             echo "::error file=VERSION::'$version' is not a semantic version like 1.2.3"
             exit 1
           fi
+          # Extension versions must be numeric, so package.json has VERSION without a suffix like -rc1
           package_version=$(node -p "require('./package.json').version")
-          if [ "$version" != "$package_version" ]; then
-            echo "::error file=package.json::The version in package.json ($package_version) must match VERSION ($version)"
+          if [ "${version%%-*}" != "$package_version" ]; then
+            echo "::error file=package.json::The version in package.json ($package_version) must be ${version%%-*}, the version in VERSION ($version) without a suffix"
             exit 1
           fi
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
@@ -66,14 +66,11 @@ jobs:
           git push origin "$TAG"
           echo "created=true" >> "$GITHUB_OUTPUT"
 
-  # A tag pushed with GITHUB_TOKEN doesn't trigger other workflows,
-  # so the release workflow is called directly
-  release:
-    needs: tag
-    if: needs.tag.outputs.created == 'true'
-    permissions:
-      contents: write
-    uses: ./.github/workflows/release.yml
-    with:
-      tag: ${{ needs.tag.outputs.tag }}
-    secrets: inherit
+      # A tag pushed with GITHUB_TOKEN doesn't trigger release.yml, so run it on the tag.
+      # It must run on the tag, because environments only allow v* tags to deploy.
+      - name: Publish the release
+        if: steps.tag.outputs.created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: gh workflow run release.yml --repo "$GITHUB_REPOSITORY" --ref "$TAG"

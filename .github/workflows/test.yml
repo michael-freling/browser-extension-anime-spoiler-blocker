@@ -46,8 +46,11 @@ jobs:
       # Plasmo generates types for messages, which tests require
       - name: Generate Plasmo types
         run: pnpm plasmo build --target=chrome-mv3
+      # Extension versions must be numeric, so package.json has VERSION without a suffix like -rc1
       - name: Check that package.json has the version in VERSION
-        run: test "$(node -p "require('./package.json').version")" = "$(tr -d '[:space:]' < VERSION)"
+        run: |
+          version=$(tr -d '[:space:]' < VERSION)
+          test "$(node -p "require('./package.json').version")" = "${version%%-*}"
       - name: Check types
         run: pnpm typecheck
       - name: Run tests with a coverage check
