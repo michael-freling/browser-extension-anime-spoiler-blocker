@@ -5,14 +5,11 @@ import * as React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import IndexPopup from ".";
 
-test("opens the settings page", () => {
-  process.env.PLASMO_PUBLIC_EXTENSION_ID = "extension-id";
-  const create = jest.fn();
-  (global as any).chrome = { tabs: { create } };
+test("opens the settings page of this extension", () => {
+  const openOptionsPage = jest.fn();
+  (global as any).chrome = { runtime: { openOptionsPage } };
 
   render(<IndexPopup />);
   fireEvent.click(screen.getByText("Settings"));
-  expect(create).toHaveBeenCalledWith({
-    url: "extension://extension-id/options.html",
-  });
+  expect(openOptionsPage).toHaveBeenCalledTimes(1);
 });
