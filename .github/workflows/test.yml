@@ -46,6 +46,8 @@ jobs:
       # Plasmo generates types for messages, which tests require
       - name: Generate Plasmo types
         run: pnpm plasmo build --target=chrome-mv3
+      - name: Check that package.json has the version in VERSION
+        run: test "$(node -p "require('./package.json').version")" = "$(tr -d '[:space:]' < VERSION)"
       - name: Check types
         run: pnpm typecheck
       - name: Run tests with a coverage check

@@ -25,6 +25,13 @@ There are 2 versions of published extensions
 - production: Extensions to publish from web stores of each browser like Chrome. This release cannot be installed from the GitHub release page.
 - staging: Extensions that can be installed from the GitHub release page and run them.
 
+## Releasing
+
+1. In a pull request, update the version in both `VERSION` and `package.json`.
+2. When it's merged, CI creates the `v<VERSION>` tag and publishes a GitHub release with the extensions for Chrome and Edge.
+   Versions with a suffix, like `1.2.3-rc1`, are published as pre-releases.
+3. Upload the production zips to the Chrome Web Store and Edge Add-ons.
+
 ## Testing
 
 ```sh
